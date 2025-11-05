@@ -6,6 +6,21 @@ from streamlit.components.v1 import html
 from extractor import GeminiExtractor
 from settings import Settings, AVAILABLE_MODELS
 from visualizer import GraphVisualizer
+from exceptions import (
+    NodusException,
+    APIKeyError,
+    RateLimitError,
+    QuotaExceededError,
+    ServerOverloadedError,
+    NetworkError,
+    ModelError,
+    ResponseParsingError,
+    MaxTokensError,
+    ValidationError,
+    EmptyResponseError,
+    SafetyBlockError,
+    InputTooLongError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -159,9 +174,92 @@ class StreamlitApp:
 
                 st.success(":white_check_mark: Knowledge graph extracted successfully.")
                 logger.info("Knowledge graph extracted successfully.")
+
+        except APIKeyError as e:
+            st.error(f":key: **{e.user_message}**")
+            if e.suggestion:
+                st.info(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"API Key Error: {e.message}")
+
+        except RateLimitError as e:
+            st.error(f":hourglass_flowing_sand: **{e.user_message}**")
+            if e.suggestion:
+                st.info(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Rate Limit Error: {e.message}")
+
+        except QuotaExceededError as e:
+            st.error(f":chart_with_downwards_trend: **{e.user_message}**")
+            if e.suggestion:
+                st.info(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Quota Exceeded Error: {e.message}")
+
+        except ServerOverloadedError as e:
+            st.error(f":construction: **{e.user_message}**")
+            if e.suggestion:
+                st.warning(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Server Overloaded Error: {e.message}")
+
+        except NetworkError as e:
+            st.error(f":signal_strength: **{e.user_message}**")
+            if e.suggestion:
+                st.info(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Network Error: {e.message}")
+
+        except ModelError as e:
+            st.error(f":robot_face: **{e.user_message}**")
+            if e.suggestion:
+                st.info(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Model Error: {e.message}")
+
+        except MaxTokensError as e:
+            st.error(f":page_facing_up: **{e.user_message}**")
+            if e.suggestion:
+                st.info(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Max Tokens Error: {e.message}")
+
+        except ResponseParsingError as e:
+            st.error(f":warning: **{e.user_message}**")
+            if e.suggestion:
+                st.info(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Response Parsing Error: {e.message}")
+
+        except ValidationError as e:
+            st.error(f":x: **{e.user_message}**")
+            if e.suggestion:
+                st.info(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Validation Error: {e.message}")
+
+        except EmptyResponseError as e:
+            st.error(f":inbox_tray: **{e.user_message}**")
+            if e.suggestion:
+                st.info(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Empty Response Error: {e.message}")
+
+        except SafetyBlockError as e:
+            st.error(f":no_entry: **{e.user_message}**")
+            if e.suggestion:
+                st.warning(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Safety Block Error: {e.message}")
+
+        except InputTooLongError as e:
+            st.error(f":scroll: **{e.user_message}**")
+            if e.suggestion:
+                st.info(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Input Too Long Error: {e.message}")
+
+        except NodusException as e:
+            # Catch-all for any other custom exceptions
+            st.error(f":x: **{e.user_message}**")
+            if e.suggestion:
+                st.info(f":bulb: **Suggestion:** {e.suggestion}")
+            logger.error(f"Nodus Error: {e.message}")
+
         except Exception as e:
-            st.error(f":x: Error extracting knowledge graph: {e}")
-            logger.error(f"Error extracting knowledge graph: {e}")
+            # Fallback for unexpected errors
+            st.error(f":x: **Unexpected error occurred**")
+            st.error(f"Error details: {str(e)}")
+            st.info(":bulb: **Suggestion:** This is an unexpected error. Please try again or contact support if the issue persists.")
+            logger.error(f"Unexpected error extracting knowledge graph: {e}", exc_info=True)
 
     def display_results(self) -> None:
         """Display the extracted knowledge graph"""

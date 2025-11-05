@@ -1,12 +1,28 @@
 import json
 import logging
 import time
+from typing import Any
 
 from google import genai
 from google.genai import types
+from google.api_core import exceptions as google_exceptions
 
 from models import KnowledgeGraph
 from settings import Settings
+from exceptions import (
+    APIKeyError,
+    RateLimitError,
+    QuotaExceededError,
+    ServerOverloadedError,
+    NetworkError,
+    ModelError,
+    ResponseParsingError,
+    MaxTokensError,
+    ValidationError,
+    EmptyResponseError,
+    SafetyBlockError,
+    InputTooLongError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +100,107 @@ class GeminiExtractor:
 
         logger.info(f"Initialized Gemini extractor")
 
+    def _handle_api_error(self, error: Exception) -> None:
+        """
+        Convert generic API errors to specific Nodus exceptions.
+
+        Args:
+            error: The original exception from the API
+
+        Raises:
+            Specific NodusException based on error type
+        """
+        error_str = str(error).lower()
+
+        # Check for specific Google API exceptions
+        if isinstance(error, google_exceptions.Unauthenticated):
+            raise APIKeyError(f"Authentication failed: {error}")
+        elif isinstance(error, google_exceptions.PermissionDenied):
+            raise APIKeyError(f"Permission denied: {error}")
+        elif isinstance(error, google_exceptions.ResourceExhausted):
+            raise QuotaExceededError(f"API quota exhausted: {error}")
+        elif isinstance(error, google_exceptions.TooManyRequests):
+            raise RateLimitError(f"Rate limit exceeded: {error}")
+        elif isinstance(error, google_exceptions.ServiceUnavailable):
+            raise ServerOverloadedError(f"Service unavailable: {error}")
+        elif isinstance(error, google_exceptions.DeadlineExceeded):
+            raise NetworkError(f"Request timeout: {error}")
+        elif isinstance(error, (google_exceptions.NotFound, google_exceptions.InvalidArgument)):
+            raise ModelError(f"Model error: {error}")
+
+        # Check for error patterns in string
+        if any(keyword in error_str for keyword in ['rate limit', 'too many requests', '429']):
+            raise RateLimitError(f"Rate limit exceeded: {error}")
+        elif any(keyword in error_str for keyword in ['quota', 'limit exceeded', '403']):
+            raise QuotaExceededError(f"Quota exceeded: {error}")
+        elif any(keyword in error_str for keyword in ['overload', 'capacity', 'unavailable', '503', '502']):
+            raise ServerOverloadedError(f"Server overloaded: {error}")
+        elif any(keyword in error_str for keyword in ['network', 'connection', 'timeout', 'unreachable']):
+            raise NetworkError(f"Network error: {error}")
+        elif any(keyword in error_str for keyword in ['unauthorized', 'unauthenticated', 'api key', '401']):
+            raise APIKeyError(f"API key error: {error}")
+        elif any(keyword in error_str for keyword in ['safety', 'blocked', 'filter']):
+            raise SafetyBlockError(f"Content blocked: {error}")
+        elif any(keyword in error_str for keyword in ['too long', 'exceeds maximum', 'max length']):
+            raise InputTooLongError(f"Input too long: {error}")
+
+        # If no specific match, log and re-raise original error
+        logger.error(f"Unhandled API error: {error}")
+        raise error
+
+    def _make_api_call_with_retry(self, text: str, max_retries: int = 3) -> Any:
+        """
+        Make API call with retry logic for transient errors.
+
+        Args:
+            text: Input text to process
+            max_retries: Maximum number of retry attempts
+
+        Returns:
+            API response
+
+        Raises:
+            Various NodusExceptions based on error type
+        """
+        last_error = None
+        retry_delays = [2, 4, 8]  # Exponential backoff: 2s, 4s, 8s
+
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"API call attempt {attempt + 1}/{max_retries}")
+                response = self.client.models.generate_content(
+                    model=self.settings.gemini_model,
+                    contents=text,
+                    config=self.content_config,
+                )
+                return response
+
+            except Exception as e:
+                last_error = e
+                logger.warning(f"API call attempt {attempt + 1} failed: {e}")
+
+                # Check if this is a retryable error
+                error_str = str(e).lower()
+                is_retryable = any(keyword in error_str for keyword in [
+                    'overload', 'unavailable', '503', '502', 'timeout', 'network', 'connection'
+                ])
+
+                # If it's not retryable or last attempt, break
+                if not is_retryable or attempt == max_retries - 1:
+                    break
+
+                # Wait before retrying (exponential backoff)
+                delay = retry_delays[min(attempt, len(retry_delays) - 1)]
+                logger.info(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+
+        # All retries failed, handle the error
+        if last_error:
+            self._handle_api_error(last_error)
+
+        # This shouldn't happen, but just in case
+        raise NetworkError("API call failed after all retries")
+
     def extract(self, text: str) -> KnowledgeGraph:
         """
         Extract a knowledge graph from the provided text.
@@ -93,22 +210,26 @@ class GeminiExtractor:
 
         Returns:
             KnowledgeGraph: The extracted knowledge graph.
+
+        Raises:
+            Various NodusExceptions for different error conditions
         """
 
         if not text or not text.strip():
             raise ValueError("Input text must be a non-empty string.")
 
+        json_data = None
+
         try:
             start_time = time.time()
-            response = self.client.models.generate_content(
-                model=self.settings.gemini_model,
-                contents=text,
-                config=self.content_config,
-            )
+
+            # Make API call with retry logic
+            response = self._make_api_call_with_retry(text)
+
             elapsed_time = time.time() - start_time
             logger.info(f"Gemini API responded in {elapsed_time:.2f}s")
 
-            # Check if response was truncated
+            # Check if response was truncated or blocked
             if hasattr(response, 'candidates') and response.candidates:
                 candidate = response.candidates[0]
                 finish_reason = candidate.finish_reason
@@ -116,8 +237,16 @@ class GeminiExtractor:
                 if finish_reason and finish_reason != 'STOP':
                     logger.warning(f"Response may be incomplete. Finish reason: {finish_reason}")
 
+                    # Handle specific finish reasons
+                    if finish_reason == 'SAFETY':
+                        raise SafetyBlockError("Content blocked by safety filters")
+                    elif finish_reason == 'MAX_TOKENS':
+                        # Will be handled below after extracting response length
+                        pass
+                    elif finish_reason == 'RECITATION':
+                        raise SafetyBlockError("Content blocked due to recitation")
+
             # Get text from response
-            json_data = None
             try:
                 json_data = response.text
             except Exception as e:
@@ -130,7 +259,7 @@ class GeminiExtractor:
                             json_data = candidate.content.parts[0].text
 
             if not json_data:
-                raise ValueError("Empty response from Gemini API. The model may have hit token limits.")
+                raise EmptyResponseError("Empty response from Gemini API")
 
             # Check if we got MAX_TOKENS after retrieving text
             if hasattr(response, 'candidates') and response.candidates:
@@ -138,32 +267,43 @@ class GeminiExtractor:
                 if finish_reason == 'MAX_TOKENS':
                     logger.error(f"Response truncated at {len(json_data)} characters")
                     logger.error(f"Last 200 chars: {json_data[-200:]}")
-                    raise ValueError(
-                        f"Response exceeded maximum token limit ({len(json_data)} chars received but truncated). "
-                        "The knowledge graph is too large for the current model. "
-                        "Try: 1) Using shorter input text, "
-                        "2) Increasing max_output_tokens in extractor.py, "
-                        "3) Simplifying the extraction task"
-                    )
+                    raise MaxTokensError(chars_received=len(json_data))
 
-            parsed_data = json.loads(json_data)
+            # Parse JSON response
+            try:
+                parsed_data = json.loads(json_data)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to decode JSON response from Gemini: {e}")
+                logger.error(f"Response length: {len(json_data)} characters")
+                logger.error(f"Last 500 chars of response: {json_data[-500:]}")
+                raise ResponseParsingError(f"Invalid JSON response: {e}")
 
             # Log raw response for debugging (minified)
             logger.debug(f"Raw Gemini response: {json.dumps(parsed_data, separators=(',', ':'))}")
 
-            knowledge_graph = KnowledgeGraph.model_validate(parsed_data)
+            # Validate response structure
+            try:
+                knowledge_graph = KnowledgeGraph.model_validate(parsed_data)
+            except Exception as e:
+                logger.error(f"Validation error: {e}")
+                raise ValidationError(f"Response validation failed: {e}")
 
             logger.info(
-                f"Successfully extracted knowledge graph with {len(knowledge_graph.nodes)} nodes and {len(knowledge_graph.relationships)} relationships")
+                f"Successfully extracted knowledge graph with {len(knowledge_graph.nodes)} nodes "
+                f"and {len(knowledge_graph.relationships)} relationships"
+            )
             return knowledge_graph
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to decode JSON response from Gemini: {e}")
-            logger.error(f"Response length: {len(json_data)} characters")
-            logger.error(f"Last 500 chars of response: {json_data[-500:]}")
+
+        except (APIKeyError, RateLimitError, QuotaExceededError, ServerOverloadedError,
+                NetworkError, ModelError, ResponseParsingError, MaxTokensError,
+                ValidationError, EmptyResponseError, SafetyBlockError, InputTooLongError):
+            # Re-raise our custom exceptions
             raise
         except Exception as e:
-            logger.error(f"Validation error: {e}")
-            raise
+            # Handle any unexpected errors
+            logger.error(f"Unexpected error during extraction: {e}", exc_info=True)
+            # Try to convert to a specific error
+            self._handle_api_error(e)
 
     def close(self):
         """Properly close the Gemini client to avoid cleanup errors."""

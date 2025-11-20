@@ -6,6 +6,7 @@ from streamlit.components.v1 import html
 from extractor import GeminiExtractor
 from settings import Settings, AVAILABLE_MODELS
 from visualizer import GraphVisualizer
+from errors import ExtractionError
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class StreamlitApp:
         st.set_page_config(
             page_title="Nodus",
             page_icon=":spider_web:",
-            layout="centered",
+            layout="wide",
             initial_sidebar_state="auto",
         )
 
@@ -30,12 +31,16 @@ class StreamlitApp:
         """Initialize session state variables"""
         if 'knowledge_graph' not in st.session_state:
             st.session_state['knowledge_graph'] = None
+        if 'executive_summary' not in st.session_state:
+            st.session_state['executive_summary'] = None
         if 'settings' not in st.session_state:
             st.session_state['settings'] = Settings()
         if 'extractor' not in st.session_state:
             st.session_state['extractor'] = None
         if 'file_uploader_key' not in st.session_state:
             st.session_state['file_uploader_key'] = 0
+        if 'use_summary_for_kg' not in st.session_state:
+            st.session_state['use_summary_for_kg'] = True
 
     def render_sidebar(self) -> None:
         """Render sidebar with settings"""
@@ -56,6 +61,18 @@ class StreamlitApp:
                 options=AVAILABLE_MODELS,
                 index=AVAILABLE_MODELS.index(st.session_state['settings'].gemini_model),
                 help="Choose the Gemini model for knowledge graph extraction.",
+            )
+
+            st.subheader("Pipeline Options")
+            st.session_state['use_summary_for_kg'] = st.sidebar.checkbox(
+                "Use executive summary to build knowledge graph",
+                value=st.session_state['use_summary_for_kg'],
+                help=(
+                    "If enabled, the app first asks Gemini for an executive "
+                    "summary of your text and then builds the knowledge graph "
+                    "from that summary. This typically produces a higher-level, "
+                    "more focused graph."
+                ),
             )
 
             st.divider()
@@ -126,7 +143,6 @@ class StreamlitApp:
             clear_button = st.button(
                 ":broom: Clear",
                 type="secondary",
-                disabled=st.session_state['knowledge_graph'] is None,
                 use_container_width=True,
                 on_click=self.clear_callback,
             )
@@ -136,7 +152,6 @@ class StreamlitApp:
                 st.warning(":warning: Please enter text to extract knowledge graph.")
             else:
                 self.extract_knowledge_graph(sample_text)
-                st.rerun()
 
         if st.session_state['knowledge_graph']:
             st.divider()
@@ -145,42 +160,100 @@ class StreamlitApp:
             st.info(":information_source: Please enter text to extract knowledge graph.")
 
     def extract_knowledge_graph(self, sample_text: str) -> None:
-        """Extract knowledge graph from text using Gemini API"""
-
+        """Extract executive summary and knowledge graph using Gemini API."""
         try:
-            with st.spinner(":mag: Extracting knowledge graph..."):
+            with st.spinner(":mag: Summarizing text and extracting knowledge graph..."):
                 if st.session_state['extractor'] is None:
                     st.session_state['extractor'] = GeminiExtractor(
                         st.session_state['settings']
                     )
+                use_summary_for_kg = st.session_state.get('use_summary_for_kg', True)
 
-                knowledge_graph = st.session_state['extractor'].extract(sample_text)
+                result = st.session_state['extractor'].extract_with_summary(
+                    sample_text,
+                    use_summary_for_kg=use_summary_for_kg,
+                )
+
+                st.session_state['executive_summary'] = result.summary
+                knowledge_graph = result.knowledge_graph
+
+                # Safety check: ensure we have some content to show
+                if not knowledge_graph.nodes or not knowledge_graph.relationships:
+                    st.session_state['knowledge_graph'] = None
+                    st.warning(
+                        ":warning: Extraction completed but returned an empty knowledge graph. "
+                        "Try providing more detailed text or a different passage."
+                    )
+                    logger.info("Extraction returned an empty knowledge graph.")
+                    return
+
                 st.session_state['knowledge_graph'] = knowledge_graph
 
-                st.success(":white_check_mark: Knowledge graph extracted successfully.")
-                logger.info("Knowledge graph extracted successfully.")
+                st.success(":white_check_mark: Summary generated and knowledge graph extracted successfully.")
+                logger.info("Summary and knowledge graph extracted successfully.")
+        except ExtractionError as e:
+            # Known, user-friendly error from the extractor
+            st.error(f":x: {e.user_message}")
+            logger.error(f"ExtractionError while extracting knowledge graph: {e}")
         except Exception as e:
-            st.error(f":x: Error extracting knowledge graph: {e}")
-            logger.error(f"Error extracting knowledge graph: {e}")
+            # Fallback for unexpected errors
+            st.error(":x: An unexpected error occurred while extracting the knowledge graph.")
+            logger.exception(f"Unexpected error extracting knowledge graph: {e}")
 
     def display_results(self) -> None:
         """Display the extracted knowledge graph"""
         st.header("Results")
+        tab_summary, tab_vis, tab_raw, tab_stats = st.tabs(
+            [":page_facing_up: Summary", ":bar_chart: Visualization", ":memo: Raw Data", ":chart_with_upwards_trend: Statistics"]
+        )
 
-        tab1, tab2, tab3 = st.tabs(
-            [":bar_chart: Visualization", ":memo: Raw Data", ":chart_with_upwards_trend: Statistics"])
+        with tab_summary:
+            self.display_summary()
 
-        with tab1:
+        with tab_vis:
             self.display_visualization()
 
-        with tab2:
+        with tab_raw:
             self.display_raw_data()
 
-        with tab3:
+        with tab_stats:
             self.display_statistics()
+
+    def display_summary(self) -> None:
+        """Display the executive summary, if available."""
+        summary = st.session_state.get('executive_summary')
+
+        if not summary:
+            st.info(":information_source: No summary available. Run an extraction first.")
+            return
+
+        st.subheader("Executive Summary")
+        st.write(summary.summary)
+
+        if summary.key_points:
+            st.markdown("**Key Points:**")
+            for point in summary.key_points:
+                st.markdown(f"- {point}")
+
+        # Optional: allow downloading the summary as text
+        summary_text = summary.summary
+        if summary.key_points:
+            summary_text += "\n\nKey Points:\n" + "\n".join(f"- {p}" for p in summary.key_points)
+
+        st.download_button(
+            label="📥 Download Summary (TXT)",
+            data=summary_text,
+            file_name="executive_summary.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
 
     def display_visualization(self):
         """Display the extracted knowledge graph visualization"""
+        if not st.session_state.get("knowledge_graph"):
+            st.info(":information_source: No knowledge graph data available to visualize.")
+            return
+
         try:
             visualizer = GraphVisualizer(
                 st.session_state['settings']
@@ -202,8 +275,8 @@ class StreamlitApp:
             html(html_content, height=768, scrolling=True)
 
         except Exception as e:
-            st.error(f":x: Error displaying visualization: {e}")
-            logger.error(f"Error displaying visualization: {e}")
+            st.error(":x: There was a problem rendering the visualization. The raw data is still available below.")
+            logger.exception(f"Error displaying visualization: {e}")
 
     def display_raw_data(self):
         """Display raw knowledge graph data."""
@@ -310,6 +383,7 @@ class StreamlitApp:
                 logger.warning(f"Error closing extractor: {e}")
 
         st.session_state.knowledge_graph = None
+        st.session_state.executive_summary = None
         st.session_state.extractor = None
         st.session_state.input_text = ''
         st.session_state.file_uploader_key += 1

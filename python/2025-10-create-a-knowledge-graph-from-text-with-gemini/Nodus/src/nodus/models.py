@@ -82,3 +82,35 @@ class KnowledgeGraph(BaseModel):
 
         self.relationships = unique_relationships
         return self
+
+
+class ExecutiveSummary(BaseModel):
+    """High-level executive summary of an input document."""
+
+    summary: str = Field(
+        description=(
+            "A concise, executive-level summary of the most important ideas "
+            "and insights from the input text. It should be understandable "
+            "on its own without reading the full document."
+        )
+    )
+    key_points: list[str] | None = Field(
+        default=None,
+        description=(
+            "Optional bullet-point list of the 3–7 most important points "
+            "from the document, written for a busy executive."
+        ),
+    )
+
+
+class ExtractionResult(BaseModel):
+    """Bundle of summary plus knowledge graph for convenience."""
+
+    summary: ExecutiveSummary | None = Field(
+        default=None,
+        description="Executive summary derived from the input text.",
+    )
+    knowledge_graph: KnowledgeGraph = Field(
+        description="Knowledge graph extracted from either the full text or the summary.",
+    )
+

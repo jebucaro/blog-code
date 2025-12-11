@@ -7,8 +7,6 @@ Welcome! This repository contains all the code examples from my blog at [jonatha
 Code is organized by programming language:
 - **`python/`** - Python examples
 
-Each folder uses the naming convention: `YYYY-MM-descriptive-slug`
-
 ## 🚀 Quick Download
 
 ### Using Git (Sparse Checkout)
@@ -20,14 +18,21 @@ git clone --depth 1 --filter=blob:none --sparse git@github.com:jebucaro/blog-cod
 cd blog-code
 
 # Download only the folder you need
-git sparse-checkout set python/2025-10-create-a-knowledge-graph-from-text-with-gemini
+git sparse-checkout set python/Nodus
 ```
 
 ## 🔗 Blog Posts Index
 
-| Date | Language | Title | Folder | Blog Post |
-|------|----------|-------|--------|-----------|
-| 2025-10 | Python | Create a Knowledge Graph From Text With Gemini | [Link](./python/Nodus) | [Read](https://jonathanbucaro.com/blog/create-a-knowledge-graph-from-text-with-gemini/) |
+Here's a list of all the code examples and their corresponding blog posts.
+
+| Date      | Language | Title                                                                                             | Folder                |
+|-----------|----------|---------------------------------------------------------------------------------------------------|-----------------------|
+| 2025-10   | Python   | [Create a Knowledge Graph From Text With Gemini](https://jonathanbucaro.com/blog/create-a-knowledge-graph-from-text-with-gemini/) | [Nodus](./python/Nodus) |
+
+
+## 👨‍💻 About the Author
+
+My name is Jonathan Bucaro, and I'm a systems engineer who loves to write about technology. You can find more of my work on my [blog](https://jonathanbucaro.com) or connect with me on [LinkedIn](https://www.linkedin.com/in/jonathanbucaro/).
 
 
 ## 📝 License

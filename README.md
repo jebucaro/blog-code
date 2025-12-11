@@ -27,7 +27,7 @@ git sparse-checkout set python/2025-10-create-a-knowledge-graph-from-text-with-g
 
 | Date | Language | Title | Folder | Blog Post |
 |------|----------|-------|--------|-----------|
-| 2025-10 | Python | Create a Knowledge Graph From Text With Gemini | [Link](./python/2025-10-create-a-knowledge-graph-from-text-with-gemini) | [Read](https://jonathanbucaro.com/blog/create-a-knowledge-graph-from-text-with-gemini/) |
+| 2025-10 | Python | Create a Knowledge Graph From Text With Gemini | [Link](./python/Nodus) | [Read](https://jonathanbucaro.com/blog/create-a-knowledge-graph-from-text-with-gemini/) |
 
 
 ## 📝 License

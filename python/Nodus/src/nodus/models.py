@@ -47,8 +47,12 @@ class Node(BaseModel):
         if v is None:
             return v
 
+        field_name = info.field_name
+        
+        if field_name == 'type' and not v.strip():
+            raise ValueError("Field 'type' cannot be empty or whitespace-only")
+
         if len(v) > 500:
-            field_name = info.field_name
             raise ValueError(f"Field '{field_name}' is too long (max 500 characters)")
 
         return v
@@ -56,7 +60,7 @@ class Node(BaseModel):
     @model_validator(mode='after')
     def ensure_label(self):
         """Auto-generate label from id if not provided."""
-        if self.label is None or self.label == '':
+        if not self.label or not self.label.strip():
             self.label = ' '.join(word.capitalize() for word in self.id.split('_'))
             logger.debug(f"Auto-generated label '{self.label}' for node id '{self.id}'")
         return self
@@ -85,12 +89,11 @@ class Relationship(BaseModel):
     @classmethod
     def validate_ids(cls, v: str, info) -> str:
         """Validate ID fields have reasonable lengths."""
+        field_name = info.field_name.replace('_', ' ').capitalize()
         if not v:
-            field_name = info.field_name
             raise ValueError(f"{field_name} cannot be empty")
 
         if len(v) > 200:
-            field_name = info.field_name
             raise ValueError(f"{field_name} '{v}' is too long (max 200 characters)")
 
         return v

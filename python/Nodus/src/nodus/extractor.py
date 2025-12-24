@@ -7,7 +7,7 @@ from google import genai
 from google.genai import types
 
 from nodus.models import KnowledgeGraph, ExecutiveSummary, ExtractionResult
-from nodus.settings import Settings
+from nodus.settings import Settings, MAX_INPUT_LENGTH
 from nodus.errors import (
     APIUnavailableError,
     ExtractionError,
@@ -21,8 +21,6 @@ from nodus.errors import (
 )
 
 logger = logging.getLogger(__name__)
-
-MAX_INPUT_LENGTH = 100000
 
 
 def _wrap_user_content(text: str) -> str:

@@ -61,6 +61,7 @@ class GraphVisualizer:
     def _get_color_for_node_type(self, node_type: str) -> str:
         """Get a consistent color for a node type using hash-based assignment."""
         if node_type not in self.node_type_colors:
+            # MD5 is used here only for deterministic color assignment, not for any security purpose.
             hash_value = int(hashlib.md5(node_type.encode()).hexdigest(), 16)
             color_index = hash_value % len(COLOR_PALETTE)
             self.node_type_colors[node_type] = COLOR_PALETTE[color_index]

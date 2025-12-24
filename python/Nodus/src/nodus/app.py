@@ -4,13 +4,11 @@ import streamlit as st
 from streamlit.components.v1 import html
 
 from nodus.extractor import GeminiExtractor
-from nodus.settings import Settings, AVAILABLE_MODELS
+from nodus.settings import Settings, AVAILABLE_MODELS, MAX_INPUT_LENGTH
 from nodus.visualizer import GraphVisualizer
 from nodus.errors import ExtractionError
 
 logger = logging.getLogger(__name__)
-
-MAX_INPUT_LENGTH = 100000
 
 
 class StreamlitApp:
@@ -166,6 +164,8 @@ class StreamlitApp:
 
     def extract_knowledge_graph(self, sample_text: str) -> None:
         """Extract executive summary and knowledge graph using Gemini API."""
+        # Defense-in-depth: validate length even though text_area has max_chars,
+        # because file upload path can truncate and update session_state directly
         if len(sample_text) > MAX_INPUT_LENGTH:
             st.error(f":x: Input text is too long ({len(sample_text):,} characters). Maximum allowed is {MAX_INPUT_LENGTH:,} characters.")
             logger.warning(f"Input length exceeded: {len(sample_text)} characters")

@@ -3,12 +3,14 @@ import logging
 import streamlit as st
 from streamlit.components.v1 import html
 
-from extractor import GeminiExtractor
-from settings import Settings, AVAILABLE_MODELS
-from visualizer import GraphVisualizer
-from errors import ExtractionError
+from nodus.extractor import GeminiExtractor
+from nodus.settings import Settings, AVAILABLE_MODELS
+from nodus.visualizer import GraphVisualizer
+from nodus.errors import ExtractionError
 
 logger = logging.getLogger(__name__)
+
+MAX_INPUT_LENGTH = 100000
 
 
 class StreamlitApp:
@@ -99,7 +101,6 @@ class StreamlitApp:
         st.title(":spider_web: Nodus")
         st.subheader("Knowledge Graph Extractor")
 
-        # File upload option
         uploaded_file = st.file_uploader(
             ":page_facing_up: Upload a text file (optional)",
             type=['txt', 'md', 'text'],
@@ -109,14 +110,18 @@ class StreamlitApp:
 
         if uploaded_file is not None:
             try:
-                # Read file content
                 content = uploaded_file.read().decode('utf-8')
                 st.session_state['input_text'] = content
 
-                # Show file info
                 lines = content.count('\n') + 1
-                st.success(
-                    f":white_check_mark: Loaded **{uploaded_file.name}** ({len(content)} characters, {lines} lines)")
+                if len(content) > MAX_INPUT_LENGTH:
+                    st.warning(
+                        f":warning: File **{uploaded_file.name}** is {len(content):,} characters, "
+                        f"which exceeds the maximum of {MAX_INPUT_LENGTH:,}. It will be truncated.")
+                    st.session_state['input_text'] = content[:MAX_INPUT_LENGTH]
+                else:
+                    st.success(
+                        f":white_check_mark: Loaded **{uploaded_file.name}** ({len(content):,} characters, {lines} lines)")
             except UnicodeDecodeError:
                 st.error(":x: Could not read file. Please ensure it's a text file in UTF-8 encoding.")
             except Exception as e:
@@ -125,11 +130,11 @@ class StreamlitApp:
         sample_text = st.text_area(
             "Enter text to extract knowledge graph",
             placeholder="Enter text to extract knowledge graph (or upload a file above)",
-            help="Enter any text to extract entities and relationships from.",
+            help=f"Enter any text to extract entities and relationships from. Maximum {MAX_INPUT_LENGTH:,} characters.",
             key='input_text',
+            max_chars=MAX_INPUT_LENGTH,
         )
 
-        # Button layout: Extract and Clear side by side
         col1, col2 = st.columns([3, 1])
 
         with col1:
@@ -161,6 +166,11 @@ class StreamlitApp:
 
     def extract_knowledge_graph(self, sample_text: str) -> None:
         """Extract executive summary and knowledge graph using Gemini API."""
+        if len(sample_text) > MAX_INPUT_LENGTH:
+            st.error(f":x: Input text is too long ({len(sample_text):,} characters). Maximum allowed is {MAX_INPUT_LENGTH:,} characters.")
+            logger.warning(f"Input length exceeded: {len(sample_text)} characters")
+            return
+
         try:
             with st.spinner(":mag: Summarizing text and extracting knowledge graph..."):
                 if st.session_state['extractor'] is None:
@@ -177,7 +187,6 @@ class StreamlitApp:
                 st.session_state['executive_summary'] = result.summary
                 knowledge_graph = result.knowledge_graph
 
-                # Safety check: ensure we have some content to show
                 if not knowledge_graph.nodes or not knowledge_graph.relationships:
                     st.session_state['knowledge_graph'] = None
                     st.warning(
@@ -192,11 +201,9 @@ class StreamlitApp:
                 st.success(":white_check_mark: Summary generated and knowledge graph extracted successfully.")
                 logger.info("Summary and knowledge graph extracted successfully.")
         except ExtractionError as e:
-            # Known, user-friendly error from the extractor
             st.error(f":x: {e.user_message}")
             logger.error(f"ExtractionError while extracting knowledge graph: {e}")
         except Exception as e:
-            # Fallback for unexpected errors
             st.error(":x: An unexpected error occurred while extracting the knowledge graph.")
             logger.exception(f"Unexpected error extracting knowledge graph: {e}")
 
@@ -235,7 +242,6 @@ class StreamlitApp:
             for point in summary.key_points:
                 st.markdown(f"- {point}")
 
-        # Optional: allow downloading the summary as text
         summary_text = summary.summary
         if summary.key_points:
             summary_text += "\n\nKey Points:\n" + "\n".join(f"- {p}" for p in summary.key_points)
@@ -259,10 +265,8 @@ class StreamlitApp:
                 st.session_state['settings']
             )
 
-            # Generate HTML in memory (no file I/O)
             html_content = visualizer.generate_html(st.session_state["knowledge_graph"])
 
-            # Add a download button for HTML
             st.download_button(
                 label="📥 Download Visualization (HTML)",
                 data=html_content,
@@ -271,7 +275,6 @@ class StreamlitApp:
                 use_container_width=True
             )
 
-            # Display the visualization in the browser
             html(html_content, height=768, scrolling=True)
 
         except Exception as e:
@@ -283,7 +286,6 @@ class StreamlitApp:
         if st.session_state.knowledge_graph:
             import json
 
-            # Add a download button for JSON
             json_data = json.dumps(
                 st.session_state.knowledge_graph.model_dump(),
                 indent=2
@@ -298,7 +300,6 @@ class StreamlitApp:
 
             st.divider()
 
-            # Display nodes
             st.subheader("Nodes")
             nodes_data = [
                 {
@@ -312,7 +313,6 @@ class StreamlitApp:
 
             st.divider()
 
-            # Display relationships
             st.subheader("Relationships")
             rels_data = [
                 {
@@ -326,7 +326,6 @@ class StreamlitApp:
 
             st.divider()
 
-            # Display full JSON
             with st.expander("View Full JSON"):
                 st.json(st.session_state.knowledge_graph.model_dump())
         else:
@@ -337,7 +336,6 @@ class StreamlitApp:
         if st.session_state.knowledge_graph:
             kg = st.session_state.knowledge_graph
 
-            # Basic metrics
             col1, col2, col3 = st.columns(3)
 
             with col1:
@@ -347,13 +345,11 @@ class StreamlitApp:
                 st.metric("Total Relationships", len(kg.relationships))
 
             with col3:
-                # Calculate unique relationship types
                 rel_types = len(set(rel.type for rel in kg.relationships))
                 st.metric("Relationship Types", rel_types)
 
             st.divider()
 
-            # Node types breakdown
             st.subheader("Node Types Distribution")
             node_types = {}
             for node in kg.nodes:
@@ -363,7 +359,6 @@ class StreamlitApp:
 
             st.divider()
 
-            # Relationship types breakdown
             st.subheader("Relationship Types Distribution")
             rel_types_count = {}
             for rel in kg.relationships:

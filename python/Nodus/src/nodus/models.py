@@ -1,6 +1,6 @@
 import logging
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, field_validator
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +28,35 @@ class Node(BaseModel):
         )
     )
 
+    @field_validator('id')
+    @classmethod
+    def validate_node_id(cls, v: str) -> str:
+        """Validate node ID is not empty and has reasonable length."""
+        if not v:
+            raise ValueError("Node ID cannot be empty")
+
+        if len(v) > 200:
+            raise ValueError(f"Node ID '{v}' is too long (max 200 characters)")
+
+        return v
+
+    @field_validator('label', 'type')
+    @classmethod
+    def validate_string_fields(cls, v: str | None, info) -> str | None:
+        """Validate string fields have reasonable lengths."""
+        if v is None:
+            return v
+
+        if len(v) > 500:
+            field_name = info.field_name
+            raise ValueError(f"Field '{field_name}' is too long (max 500 characters)")
+
+        return v
+
     @model_validator(mode='after')
     def ensure_label(self):
         """Auto-generate label from id if not provided."""
         if self.label is None or self.label == '':
-            # Convert id to a human-readable label: "alex_johnson" -> "Alex Johnson"
             self.label = ' '.join(word.capitalize() for word in self.id.split('_'))
             logger.debug(f"Auto-generated label '{self.label}' for node id '{self.id}'")
         return self
@@ -44,6 +68,32 @@ class Relationship(BaseModel):
     type: str = Field(description="Relationship type (e.g., 'works_at', 'located_in')")
     source_node_id: str = Field(description="ID of the source node")
     target_node_id: str = Field(description="ID of the target node")
+
+    @field_validator('type')
+    @classmethod
+    def validate_relationship_type(cls, v: str) -> str:
+        """Validate relationship type is not empty and has reasonable length."""
+        if not v:
+            raise ValueError("Relationship type cannot be empty")
+
+        if len(v) > 200:
+            raise ValueError(f"Relationship type '{v}' is too long (max 200 characters)")
+
+        return v
+
+    @field_validator('id', 'source_node_id', 'target_node_id')
+    @classmethod
+    def validate_ids(cls, v: str, info) -> str:
+        """Validate ID fields have reasonable lengths."""
+        if not v:
+            field_name = info.field_name
+            raise ValueError(f"{field_name} cannot be empty")
+
+        if len(v) > 200:
+            field_name = info.field_name
+            raise ValueError(f"{field_name} '{v}' is too long (max 200 characters)")
+
+        return v
 
 
 class KnowledgeGraph(BaseModel):
@@ -59,14 +109,13 @@ class KnowledgeGraph(BaseModel):
             return self
 
         seen_ids = set()
-        seen_semantic = set()  # Track (source_node_id, type, target_node_id) tuples
+        seen_semantic = set()
         unique_relationships = []
         duplicates = []
 
         for rel in self.relationships:
             semantic_key = (rel.source_node_id, rel.type, rel.target_node_id)
 
-            # Check both ID duplicates and semantic duplicates
             if rel.id not in seen_ids and semantic_key not in seen_semantic:
                 seen_ids.add(rel.id)
                 seen_semantic.add(semantic_key)

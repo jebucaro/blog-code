@@ -3,6 +3,7 @@ import logging
 import time
 from typing import Any
 
+import pydantic
 from google import genai
 from google.genai import types
 
@@ -274,6 +275,13 @@ class GeminiExtractor:
         except TokenLimitError:
             raise
 
+        except pydantic.ValidationError as e:
+            logger.error("Pydantic validation failed: %s", e)
+            raise ParsingError(
+                user_message=messages["parsing"],
+                detail=f"Schema validation failed: {str(e)}",
+            ) from e
+
         except Exception as e:
             detail = str(e)
             lowered = detail.lower()
@@ -385,6 +393,13 @@ class GeminiExtractor:
 
         except TokenLimitError:
             raise
+
+        except pydantic.ValidationError as e:
+            logger.error("Pydantic validation failed in summary: %s", e)
+            raise ParsingError(
+                user_message=messages["parsing"],
+                detail=f"Schema validation failed: {str(e)}",
+            ) from e
 
         except Exception as e:
             detail = str(e)

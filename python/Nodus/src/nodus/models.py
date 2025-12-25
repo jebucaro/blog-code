@@ -32,8 +32,8 @@ class Node(BaseModel):
     @classmethod
     def validate_node_id(cls, v: str) -> str:
         """Validate node ID is not empty and has reasonable length."""
-        if not v:
-            raise ValueError("Node ID cannot be empty")
+        if not v or not v.strip():
+            raise ValueError("Node ID cannot be empty or whitespace-only")
 
         if len(v) > 200:
             raise ValueError(f"Node ID '{v}' is too long (max 200 characters)")
@@ -77,8 +77,8 @@ class Relationship(BaseModel):
     @classmethod
     def validate_relationship_type(cls, v: str) -> str:
         """Validate relationship type is not empty and has reasonable length."""
-        if not v:
-            raise ValueError("Relationship type cannot be empty")
+        if not v or not v.strip():
+            raise ValueError("Relationship type cannot be empty or whitespace-only")
 
         if len(v) > 200:
             raise ValueError(f"Relationship type '{v}' is too long (max 200 characters)")
@@ -90,8 +90,8 @@ class Relationship(BaseModel):
     def validate_ids(cls, v: str, info) -> str:
         """Validate ID fields have reasonable lengths."""
         field_name = info.field_name.replace('_', ' ').capitalize()
-        if not v:
-            raise ValueError(f"{field_name} cannot be empty")
+        if not v or not v.strip():
+            raise ValueError(f"{field_name} cannot be empty or whitespace-only")
 
         if len(v) > 200:
             raise ValueError(f"{field_name} '{v}' is too long (max 200 characters)")

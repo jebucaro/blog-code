@@ -109,7 +109,6 @@ class StreamlitApp:
         if uploaded_file is not None:
             try:
                 content = uploaded_file.read().decode('utf-8')
-                st.session_state['input_text'] = content
 
                 lines = content.count('\n') + 1
                 if len(content) > MAX_INPUT_LENGTH:
@@ -120,6 +119,7 @@ class StreamlitApp:
                 else:
                     st.success(
                         f":white_check_mark: Loaded **{uploaded_file.name}** ({len(content):,} characters, {lines} lines)")
+                    st.session_state['input_text'] = content
             except UnicodeDecodeError:
                 st.error(":x: Could not read file. Please ensure it's a text file in UTF-8 encoding.")
             except Exception as e:

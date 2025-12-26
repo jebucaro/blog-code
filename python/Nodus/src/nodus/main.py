@@ -1,6 +1,6 @@
 import logging
 
-from app import StreamlitApp
+from nodus.app import StreamlitApp
 
 
 def main():

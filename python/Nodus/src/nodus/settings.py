@@ -7,6 +7,10 @@ AVAILABLE_MODELS = [
     "gemini-2.5-pro",
 ]
 
+# Maximum input text length (characters) for extraction/summarization
+# Approximately 1 hour of transcription at typical speaking rate
+MAX_INPUT_LENGTH = 100000
+
 
 class Settings(BaseSettings):
     """Application configuration settings."""

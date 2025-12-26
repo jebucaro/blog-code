@@ -32,7 +32,7 @@ class Node(BaseModel):
     @classmethod
     def validate_node_id(cls, v: str) -> str:
         """Validate node ID is not empty, has reasonable length, and is normalized."""
-        stripped = v.strip() if v is not None else v
+        stripped = v.strip()
         if not stripped:
             raise ValueError("Node ID cannot be empty or whitespace-only")
 
@@ -79,7 +79,7 @@ class Relationship(BaseModel):
     @classmethod
     def validate_relationship_type(cls, v: str) -> str:
         """Validate relationship type is not empty, has reasonable length, and is normalized."""
-        stripped = v.strip() if v is not None else v
+        stripped = v.strip()
         if not stripped:
             raise ValueError("Relationship type cannot be empty or whitespace-only")
 
@@ -92,8 +92,8 @@ class Relationship(BaseModel):
     @classmethod
     def validate_ids(cls, v: str, info) -> str:
         """Validate ID fields have reasonable lengths and are normalized."""
-        field_name = info.field_name.replace('_', ' ').capitalize()
-        stripped = v.strip() if v is not None else v
+        field_name = info.field_name.replace('_', ' ').title()
+        stripped = v.strip()
         if not stripped:
             raise ValueError(f"{field_name} cannot be empty or whitespace-only")
 

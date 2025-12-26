@@ -31,31 +31,33 @@ class Node(BaseModel):
     @field_validator('id')
     @classmethod
     def validate_node_id(cls, v: str) -> str:
-        """Validate node ID is not empty and has reasonable length."""
-        if not v or not v.strip():
+        """Validate node ID is not empty, has reasonable length, and is normalized."""
+        stripped = v.strip() if v is not None else v
+        if not stripped:
             raise ValueError("Node ID cannot be empty or whitespace-only")
 
-        if len(v) > 200:
-            raise ValueError(f"Node ID '{v}' is too long (max 200 characters)")
+        if len(stripped) > 200:
+            raise ValueError(f"Node ID '{stripped}' is too long (max 200 characters)")
 
-        return v
+        return stripped
 
     @field_validator('label', 'type')
     @classmethod
     def validate_string_fields(cls, v: str | None, info) -> str | None:
-        """Validate string fields have reasonable lengths."""
+        """Validate string fields have reasonable lengths and are normalized."""
         if v is None:
             return v
 
         field_name = info.field_name
-        
-        if field_name == 'type' and not v.strip():
+        stripped = v.strip()
+
+        if field_name == 'type' and not stripped:
             raise ValueError("Field 'type' cannot be empty or whitespace-only")
 
-        if len(v) > 500:
+        if len(stripped) > 500:
             raise ValueError(f"Field '{field_name}' is too long (max 500 characters)")
 
-        return v
+        return stripped
 
     @model_validator(mode='after')
     def ensure_label(self):
@@ -76,27 +78,29 @@ class Relationship(BaseModel):
     @field_validator('type')
     @classmethod
     def validate_relationship_type(cls, v: str) -> str:
-        """Validate relationship type is not empty and has reasonable length."""
-        if not v or not v.strip():
+        """Validate relationship type is not empty, has reasonable length, and is normalized."""
+        stripped = v.strip() if v is not None else v
+        if not stripped:
             raise ValueError("Relationship type cannot be empty or whitespace-only")
 
-        if len(v) > 200:
-            raise ValueError(f"Relationship type '{v}' is too long (max 200 characters)")
+        if len(stripped) > 200:
+            raise ValueError(f"Relationship type '{stripped}' is too long (max 200 characters)")
 
-        return v
+        return stripped
 
     @field_validator('id', 'source_node_id', 'target_node_id')
     @classmethod
     def validate_ids(cls, v: str, info) -> str:
-        """Validate ID fields have reasonable lengths."""
+        """Validate ID fields have reasonable lengths and are normalized."""
         field_name = info.field_name.replace('_', ' ').capitalize()
-        if not v or not v.strip():
+        stripped = v.strip() if v is not None else v
+        if not stripped:
             raise ValueError(f"{field_name} cannot be empty or whitespace-only")
 
-        if len(v) > 200:
-            raise ValueError(f"{field_name} '{v}' is too long (max 200 characters)")
+        if len(stripped) > 200:
+            raise ValueError(f"{field_name} '{stripped}' is too long (max 200 characters)")
 
-        return v
+        return stripped
 
 
 class KnowledgeGraph(BaseModel):

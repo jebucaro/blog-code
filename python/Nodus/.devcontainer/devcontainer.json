@@ -5,7 +5,7 @@
 	"image": "mcr.microsoft.com/devcontainers/python:3-3.12-trixie",
 
 	"features": {
-		"ghcr.io/astral-sh/uv:latest": {}
+		"ghcr.io/devcontainer-community/devcontainer-features/astral.sh-uv:1": {}
 	},
 
 	"forwardPorts": [8501],
@@ -17,10 +17,6 @@
 	},
 
 	"postCreateCommand": "uv sync --dev",
-
-	"remoteEnv": {
-		"GEMINI_API_KEY": "${localEnv:GEMINI_API_KEY}"
-	},
 
 	"customizations": {
 		"vscode": {

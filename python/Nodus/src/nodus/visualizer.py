@@ -161,7 +161,7 @@ class GraphVisualizer:
                     },
                     "minVelocity": 0.75,
                     "solver": "forceAtlas2Based",
-                    "stabilization": {"iterations": 100}
+                    "stabilization": {"iterations": 100, "fit": true}
                 },
                 "interaction": {
                     "hover": true,
@@ -191,6 +191,48 @@ class GraphVisualizer:
         """Generate HTML visualization as a string (in-memory, no file I/O)."""
         net = self._build_network(graph)
         html_content = net.generate_html()
+
+        # Override PyVis defaults: make the canvas fill the entire iframe.
+        # PyVis generates #mynetwork with height:600px and float:left inside a
+        # Bootstrap card, with empty <center><h1></h1></center> elements that
+        # consume vertical space. This forces everything to 100vh so that
+        # network.fit() centres within the full available area.
+        css_override = (
+            "<style>"
+            "html,body{height:100%;margin:0;padding:0;overflow:hidden;}"
+            "center,h1{display:none;}"
+            ".card{height:100vh;border:0!important;margin:0!important;padding:0!important;}"
+            "#mynetwork{width:100%!important;height:100vh!important;border:0!important;float:none!important;}"
+            "</style>"
+        )
+        html_content = html_content.replace("</head>", css_override + "</head>")
+
+        fit_script = (
+            'var _stabilized = false, _hasSize = false, _fitDone = false;\n'
+            'var _fitOpts = { animation: { duration: 500, easingFunction: "easeInOutQuad" } };\n'
+            'function _tryFit() {\n'
+            '    if (_stabilized && _hasSize && !_fitDone) {\n'
+            '        _fitDone = true;\n'
+            '        network.fit(_fitOpts);\n'
+            '    }\n'
+            '}\n'
+            'network.once("stabilizationIterationsDone", function() {\n'
+            '    _stabilized = true; setTimeout(_tryFit, 50);\n'
+            '});\n'
+            'var _ro = new ResizeObserver(function(entries) {\n'
+            '    for (var e of entries) {\n'
+            '        if (e.contentRect.width > 0 && e.contentRect.height > 0) {\n'
+            '            _hasSize = true; _ro.disconnect(); setTimeout(_tryFit, 50);\n'
+            '        }\n'
+            '    }\n'
+            '});\n'
+            '_ro.observe(document.getElementById("mynetwork"));\n'
+            'setTimeout(function() { if (!_fitDone) { _fitDone = true; network.fit(_fitOpts); } }, 4000);\n'
+        )
+        html_content = html_content.replace(
+            "network = new vis.Network(container, data, options);",
+            "network = new vis.Network(container, data, options);\n" + fit_script
+        )
         logger.info("Generated HTML visualization in memory")
         return html_content
 

@@ -1,5 +1,9 @@
 import logging
 
+from dotenv import find_dotenv, load_dotenv
+
+load_dotenv(find_dotenv(usecwd=True))
+
 from nodus.app import StreamlitApp
 
 

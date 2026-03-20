@@ -1,3 +1,4 @@
+from dotenv import find_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Curated list of Gemini models suitable for knowledge graph extraction
@@ -21,7 +22,7 @@ class Settings(BaseSettings):
     viz_theme: str = "dark"  # Options: 'dark', 'light'
 
     model_config = SettingsConfigDict(
-        env_file='.env',
+        env_file=find_dotenv(usecwd=True) or '.env',
         env_file_encoding='utf-8',
         extra='ignore',  # Ignore extra fields in .env
         case_sensitive=False  # Allow GEMINI_API_KEY or gemini_api_key

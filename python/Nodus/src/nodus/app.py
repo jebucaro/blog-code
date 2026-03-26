@@ -71,6 +71,15 @@ class StreamlitApp:
                 ),
             )
 
+            st.session_state['settings'].use_thinking = st.sidebar.checkbox(
+                "Enable thinking mode",
+                value=st.session_state['settings'].use_thinking,
+                help=(
+                    "Uses Gemini's extended reasoning for more accurate knowledge graph extraction. "
+                    "Produces higher-quality results but takes longer."
+                ),
+            )
+
             st.caption(
                 "Nodus extracts entities and relationships from text using Gemini. "
                 "Paste text or upload a file, then click Extract."
@@ -120,7 +129,7 @@ class StreamlitApp:
                 type="primary",
                 use_container_width=True,
             )
-            clear_button = st.button(
+            st.button(
                 ":material/delete_sweep: Clear",
                 type="secondary",
                 use_container_width=True,
@@ -149,8 +158,19 @@ class StreamlitApp:
             logger.warning(f"Input length exceeded: {len(sample_text)} characters")
             return
 
+        extractor = st.session_state['extractor']
+        if extractor is not None:
+            s = st.session_state['settings']
+            if (extractor.settings.gemini_model != s.gemini_model or
+                    extractor.settings.use_thinking != s.use_thinking):
+                extractor.close()
+                st.session_state['extractor'] = None
+
         try:
-            with st.spinner(":mag: Summarizing text and extracting knowledge graph..."):
+            with st.status(":material/auto_awesome: Extracting knowledge graph...", expanded=True) as status:
+                def progress(msg: str) -> None:
+                    status.write(msg)
+
                 if st.session_state['extractor'] is None:
                     st.session_state['extractor'] = GeminiExtractor(
                         st.session_state['settings']
@@ -160,7 +180,10 @@ class StreamlitApp:
                 result = st.session_state['extractor'].extract_with_summary(
                     sample_text,
                     use_summary_for_kg=use_summary_for_kg,
+                    show_summary=True,
+                    on_progress=progress,
                 )
+                status.update(label=":material/check_circle: Done.", state="complete", expanded=False)
 
                 st.session_state['executive_summary'] = result.summary
                 knowledge_graph = result.knowledge_graph

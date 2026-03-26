@@ -161,7 +161,7 @@ class GraphVisualizer:
                     },
                     "minVelocity": 0.75,
                     "solver": "forceAtlas2Based",
-                    "stabilization": {"iterations": 100, "fit": true}
+                    "stabilization": {"iterations": 100, "fit": false}
                 },
                 "interaction": {
                     "hover": true,
@@ -208,26 +208,41 @@ class GraphVisualizer:
         html_content = html_content.replace("</head>", css_override + "</head>")
 
         fit_script = (
-            'var _stabilized = false, _hasSize = false, _fitDone = false;\n'
+            'var _physicsOff = false;\n'
             'var _fitOpts = { animation: { duration: 500, easingFunction: "easeInOutQuad" } };\n'
-            'function _tryFit() {\n'
-            '    if (_stabilized && _hasSize && !_fitDone) {\n'
-            '        _fitDone = true;\n'
-            '        network.fit(_fitOpts);\n'
-            '    }\n'
+            'var _fitTimer = null;\n'
+            'function _scheduleFit() {\n'
+            '    if (!_physicsOff) return;\n'
+            '    if (_fitTimer !== null) clearTimeout(_fitTimer);\n'
+            '    _fitTimer = setTimeout(function() {\n'
+            '        _fitTimer = null;\n'
+            '        requestAnimationFrame(function() { network.fit(_fitOpts); });\n'
+            '    }, 200);\n'
             '}\n'
             'network.once("stabilizationIterationsDone", function() {\n'
-            '    _stabilized = true; setTimeout(_tryFit, 50);\n'
+            '    network.setOptions({ physics: { enabled: false } });\n'
+            '    _physicsOff = true;\n'
+            '    requestAnimationFrame(function() { network.fit(_fitOpts); });\n'
+            '    setTimeout(function() { _scheduleFit(); }, 250);\n'
+            '    setTimeout(function() { _scheduleFit(); }, 700);\n'
             '});\n'
+            'var _lastW = 0, _lastH = 0;\n'
             'var _ro = new ResizeObserver(function(entries) {\n'
             '    for (var e of entries) {\n'
-            '        if (e.contentRect.width > 0 && e.contentRect.height > 0) {\n'
-            '            _hasSize = true; _ro.disconnect(); setTimeout(_tryFit, 50);\n'
+            '        var w = e.contentRect.width, h = e.contentRect.height;\n'
+            '        if (w > 0 && h > 0 && (w !== _lastW || h !== _lastH)) {\n'
+            '            _lastW = w; _lastH = h;\n'
+            '            _scheduleFit();\n'
             '        }\n'
             '    }\n'
             '});\n'
             '_ro.observe(document.getElementById("mynetwork"));\n'
-            'setTimeout(function() { if (!_fitDone) { _fitDone = true; network.fit(_fitOpts); } }, 4000);\n'
+            'setTimeout(function() {\n'
+            '    if (!_physicsOff) {\n'
+            '        _physicsOff = true;\n'
+            '        requestAnimationFrame(function() { network.fit(_fitOpts); });\n'
+            '    }\n'
+            '}, 2000);\n'
         )
         html_content = html_content.replace(
             "network = new vis.Network(container, data, options);",

@@ -16,7 +16,8 @@
 		}
 	},
 
-	"postCreateCommand": "uv sync --dev",
+	"postCreateCommand": "export PATH=$HOME/.local/bin:$PATH && uv sync --dev",
+	"postStartCommand": "export PATH=$HOME/.local/bin:$PATH && uv sync --dev",
 
 	"customizations": {
 		"vscode": {

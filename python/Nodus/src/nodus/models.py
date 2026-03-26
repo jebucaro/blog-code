@@ -4,6 +4,16 @@ from pydantic import BaseModel, Field, model_validator, field_validator
 
 logger = logging.getLogger(__name__)
 
+NODE_TYPES: list[str] = [
+    "person", "organization", "location", "event",
+    "concept", "product", "technology", "date", "other",
+]
+RELATIONSHIP_TYPE_EXAMPLES: list[str] = [
+    "WORKS_AT", "WORKS_WITH", "OWNS", "LEADS", "CREATED", "DEPENDS_ON",
+    "LOCATED_IN", "PART_OF", "AFFILIATED_WITH", "ACQUIRED", "INVESTED_IN",
+    "REPORTED_TO", "COMPETED_WITH", "CAUSED", "PRECEDED", "FOLLOWED", "RELATED_TO",
+]
+
 
 class Node(BaseModel):
     """Represents an entity or concept in the knowledge graph."""
@@ -56,6 +66,13 @@ class Node(BaseModel):
 
         if len(stripped) > 500:
             raise ValueError(f"Field '{field_name}' is too long (max 500 characters)")
+
+        if field_name == 'type':
+            normalized = stripped.lower()
+            if normalized not in NODE_TYPES:
+                logger.debug(f"Node type '{normalized}' not in controlled vocabulary; coercing to 'other'")
+                normalized = "other"
+            return normalized
 
         return stripped
 

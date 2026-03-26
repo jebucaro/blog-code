@@ -1,13 +1,16 @@
+import concurrent.futures
+import hashlib
 import json
 import logging
 import time
+from collections.abc import Callable
 from typing import Any
 
 import pydantic
 from google import genai
 from google.genai import types
 
-from nodus.models import KnowledgeGraph, ExecutiveSummary, ExtractionResult
+from nodus.models import KnowledgeGraph, ExecutiveSummary, ExtractionResult, NODE_TYPES, RELATIONSHIP_TYPE_EXAMPLES
 from nodus.settings import Settings, MAX_INPUT_LENGTH
 from nodus.errors import (
     APIUnavailableError,
@@ -71,7 +74,23 @@ The input text may be a raw document or a pre-processed, structured summary with
     - Create a unique, human-readable identifier for each relationship (e.g., 'acme_corp_works_with_vendor_x').
 - **`type` (Relationship Type):**
     - The `type` must be a general, timeless, and **UPPERCASE** verb phrase using **underscores (_)** (e.g., 'WORKS_AS', 'DEPENDS_ON').
-"""
+
+## 3b. Coreference Resolution and Entity Disambiguation
+- Resolve all pronouns (he, she, they, it) to their referent entity before creating nodes — never use pronouns as node IDs or labels.
+- When an entity appears with multiple names (e.g. "John", "John Smith", "the CEO"), assign one canonical node using the most complete name; normalize all references to that node's `id`.
+- Merge nodes that refer to the same real-world entity; keep them separate only if context is genuinely ambiguous.
+
+## 4b. Controlled Node Types
+- The `type` field MUST be one of these values: {node_types}
+- Use `"other"` only when none of the listed types fit.
+
+## 5b. Relationship Type Vocabulary
+- Prefer these relationship types when applicable: {rel_types}
+- Create new relationship types only when none of the above fit.
+""".format(
+    node_types=", ".join(NODE_TYPES),
+    rel_types=", ".join(RELATIONSHIP_TYPE_EXAMPLES),
+)
 
 
 SUMMARY_SYSTEM_PROMPT = """
@@ -149,6 +168,7 @@ class GeminiExtractor:
             )
 
         self.client = genai.Client(api_key=key_to_use)
+        self._cache: dict[tuple, KnowledgeGraph | ExecutiveSummary] = {}
 
         safety_settings = [
             types.SafetySetting(
@@ -169,12 +189,21 @@ class GeminiExtractor:
             ),
         ]
 
-        self.kg_config = types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT,
-            response_mime_type="application/json",
-            response_schema=KnowledgeGraph.model_json_schema(),
-            safety_settings=safety_settings,
-        )
+        if self.settings.use_thinking:
+            self.kg_config = types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+                response_mime_type="application/json",
+                response_schema=KnowledgeGraph.model_json_schema(),
+                thinking_config=types.ThinkingConfig(thinking_level="high"),
+                safety_settings=safety_settings,
+            )
+        else:
+            self.kg_config = types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+                response_mime_type="application/json",
+                response_schema=KnowledgeGraph.model_json_schema(),
+                safety_settings=safety_settings,
+            )
         self.summary_config = types.GenerateContentConfig(
             system_instruction=SUMMARY_SYSTEM_PROMPT,
             response_mime_type="application/json",
@@ -183,6 +212,13 @@ class GeminiExtractor:
         )
 
         logger.info("Initialized Gemini extractor")
+
+    def _cache_key(self, text: str, call_type: str) -> tuple:
+        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+        return (digest, self.settings.gemini_model, call_type)
+
+    def clear_cache(self) -> None:
+        self._cache.clear()
 
     def extract(self, text: str) -> KnowledgeGraph:
         """Extract a knowledge graph from the provided text."""
@@ -194,6 +230,11 @@ class GeminiExtractor:
                 f"Input text is too long ({len(text):,} characters). "
                 f"Maximum allowed is {MAX_INPUT_LENGTH:,} characters."
             )
+
+        key = self._cache_key(text, "kg")
+        if key in self._cache:
+            logger.info("Cache hit for KG extraction")
+            return self._cache[key]  # type: ignore[return-value]
 
         json_data: str | None = None
         messages = default_user_messages()
@@ -250,6 +291,7 @@ class GeminiExtractor:
             logger.debug(f"Raw Gemini response: {json.dumps(parsed_data, separators=(',', ':'))}")
 
             knowledge_graph = KnowledgeGraph.model_validate(parsed_data)
+            self._cache[key] = knowledge_graph
 
             logger.info(
                 "Successfully extracted knowledge graph with %d nodes and %d relationships in %.2fs",
@@ -320,6 +362,11 @@ class GeminiExtractor:
                 f"Maximum allowed is {MAX_INPUT_LENGTH:,} characters."
             )
 
+        key = self._cache_key(text, "summary")
+        if key in self._cache:
+            logger.info("Cache hit for summary")
+            return self._cache[key]  # type: ignore[return-value]
+
         json_data: str | None = None
         messages = default_user_messages()
 
@@ -375,6 +422,7 @@ class GeminiExtractor:
             logger.debug(f"Raw Gemini summary response: {json.dumps(parsed_data, separators=(',', ':'))}")
 
             summary = ExecutiveSummary.model_validate(parsed_data)
+            self._cache[key] = summary
             logger.info("Successfully generated executive summary")
             return summary
 
@@ -429,17 +477,43 @@ class GeminiExtractor:
             logger.error("Summary generation failed: %s", mapped)
             raise mapped from e
 
-    def extract_with_summary(self, text: str, use_summary_for_kg: bool = True) -> ExtractionResult:
+    def extract_with_summary(
+        self,
+        text: str,
+        use_summary_for_kg: bool = True,
+        show_summary: bool = True,
+        on_progress: Callable[[str], None] | None = None,
+    ) -> ExtractionResult:
         """Perform summarization and knowledge graph extraction."""
+        def notify(msg: str) -> None:
+            if on_progress:
+                try:
+                    on_progress(msg)
+                except Exception:
+                    pass
+
         summary: ExecutiveSummary | None = None
-        summary = self.summarize(text)
 
         if use_summary_for_kg:
-            kg_input = summary.summary
+            # Sequential: summary feeds KG
+            notify("Generating executive summary...")
+            summary = self.summarize(text)
+            notify("Summary complete. Extracting knowledge graph...")
+            knowledge_graph = self.extract(summary.summary)
+        elif show_summary:
+            # Parallel: both operate on original text independently
+            notify("Running summarization and knowledge graph extraction in parallel...")
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+                summary_future = executor.submit(self.summarize, text)
+                kg_future = executor.submit(self.extract, text)
+                summary = summary_future.result()
+                knowledge_graph = kg_future.result()
         else:
-            kg_input = text
+            # No summary needed
+            notify("Extracting knowledge graph...")
+            knowledge_graph = self.extract(text)
 
-        knowledge_graph = self.extract(kg_input)
+        notify("Done.")
         return ExtractionResult(summary=summary, knowledge_graph=knowledge_graph)
 
     def close(self):

@@ -161,7 +161,7 @@ class GraphVisualizer:
                     },
                     "minVelocity": 0.75,
                     "solver": "forceAtlas2Based",
-                    "stabilization": {"iterations": 100}
+                    "stabilization": {"iterations": 100, "fit": false}
                 },
                 "interaction": {
                     "hover": true,
@@ -191,6 +191,63 @@ class GraphVisualizer:
         """Generate HTML visualization as a string (in-memory, no file I/O)."""
         net = self._build_network(graph)
         html_content = net.generate_html()
+
+        # Override PyVis defaults: make the canvas fill the entire iframe.
+        # PyVis generates #mynetwork with height:600px and float:left inside a
+        # Bootstrap card, with empty <center><h1></h1></center> elements that
+        # consume vertical space. This forces everything to 100vh so that
+        # network.fit() centres within the full available area.
+        css_override = (
+            "<style>"
+            "html,body{height:100%;margin:0;padding:0;overflow:hidden;}"
+            "center,h1{display:none;}"
+            ".card{height:100vh;border:0!important;margin:0!important;padding:0!important;}"
+            "#mynetwork{width:100%!important;height:100vh!important;border:0!important;float:none!important;}"
+            "</style>"
+        )
+        html_content = html_content.replace("</head>", css_override + "</head>")
+
+        fit_script = (
+            'var _physicsOff = false;\n'
+            'var _fitOpts = { animation: { duration: 500, easingFunction: "easeInOutQuad" } };\n'
+            'var _fitTimer = null;\n'
+            'function _scheduleFit() {\n'
+            '    if (!_physicsOff) return;\n'
+            '    if (_fitTimer !== null) clearTimeout(_fitTimer);\n'
+            '    _fitTimer = setTimeout(function() {\n'
+            '        _fitTimer = null;\n'
+            '        requestAnimationFrame(function() { network.fit(_fitOpts); });\n'
+            '    }, 200);\n'
+            '}\n'
+            'network.once("stabilizationIterationsDone", function() {\n'
+            '    network.setOptions({ physics: { enabled: false } });\n'
+            '    _physicsOff = true;\n'
+            '    requestAnimationFrame(function() { network.fit(_fitOpts); });\n'
+            '    setTimeout(function() { _scheduleFit(); }, 250);\n'
+            '    setTimeout(function() { _scheduleFit(); }, 700);\n'
+            '});\n'
+            'var _lastW = 0, _lastH = 0;\n'
+            'var _ro = new ResizeObserver(function(entries) {\n'
+            '    for (var e of entries) {\n'
+            '        var w = e.contentRect.width, h = e.contentRect.height;\n'
+            '        if (w > 0 && h > 0 && (w !== _lastW || h !== _lastH)) {\n'
+            '            _lastW = w; _lastH = h;\n'
+            '            _scheduleFit();\n'
+            '        }\n'
+            '    }\n'
+            '});\n'
+            '_ro.observe(document.getElementById("mynetwork"));\n'
+            'setTimeout(function() {\n'
+            '    if (!_physicsOff) {\n'
+            '        _physicsOff = true;\n'
+            '        requestAnimationFrame(function() { network.fit(_fitOpts); });\n'
+            '    }\n'
+            '}, 2000);\n'
+        )
+        html_content = html_content.replace(
+            "network = new vis.Network(container, data, options);",
+            "network = new vis.Network(container, data, options);\n" + fit_script
+        )
         logger.info("Generated HTML visualization in memory")
         return html_content
 

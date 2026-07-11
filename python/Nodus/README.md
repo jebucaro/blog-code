@@ -44,8 +44,9 @@ Create a `.env` file in the project root:
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # Optional (defaults shown)
-GEMINI_MODEL=gemini-2.5-flash-lite
-VIZ_THEME=light
+GEMINI_MODEL=gemini-3.5-flash
+THINKING_LEVEL=default
+VIZ_THEME=dark
 ```
 
 Alternatively, you can enter the API key directly in the Streamlit sidebar when running the app.
@@ -69,19 +70,21 @@ This will:
 
 1. **Enter API Key**: Paste your Gemini API key in the sidebar (if not in `.env`)
 2. **Select Model**: Choose from:
-   - `gemini-2.5-flash-lite` - Fastest, most cost-effective
-   - `gemini-2.5-flash` - Balanced performance
-   - `gemini-2.5-pro` - Most capable, larger context
-3. **Input Text**: Either:
+   - `gemini-3.1-flash-lite` - Fastest, most cost-effective
+   - `gemini-3.5-flash` - Balanced performance (default)
+   - `gemini-3.1-pro-preview` - Most capable, deepest reasoning
+3. **Pick a Thinking Level** (optional): "Model default" uses each model's built-in
+   thinking level; Low/Medium/High trade speed for extraction quality.
+4. **Input Text**: Either:
    - Upload a text file (`.txt`, `.md`) using the file uploader
    - Paste text directly into the text area
-4. **Extract**: Click "Extract" to generate the knowledge graph
-5. **View Results**: Explore three tabs:
+5. **Extract**: Click "Extract" to generate the knowledge graph
+6. **View Results**: Explore three tabs:
    - **Visualization**: Interactive graph (drag, zoom, hover for details)
    - **Raw Data**: Tables of nodes and relationships, full JSON
    - **Statistics**: Counts and distributions
-6. **Export**: Download HTML visualization or JSON data
-7. **Clear**: Reset everything and start over
+7. **Export**: Download HTML visualization or JSON data
+8. **Clear**: Reset everything and start over
 
 ### Example Text
 
@@ -145,15 +148,15 @@ The application supports three curated Gemini models:
 
 | Model | Best For | Speed | Cost |
 |-------|----------|-------|------|
-| `gemini-2.5-flash-lite` | Quick extractions, small texts | Fastest | Lowest |
-| `gemini-2.5-flash` | Balanced performance | Fast | Medium |
-| `gemini-2.5-pro` | Complex texts, high accuracy | Slower | Higher |
+| `gemini-3.1-flash-lite` | Quick extractions, small texts | Fastest | Lowest |
+| `gemini-3.5-flash` | Balanced performance (default) | Fast | Medium |
+| `gemini-3.1-pro-preview` | Complex texts, high accuracy | Slower | Higher |
 
 ### Visualization Themes
 
 Set in `.env` or modify in code:
-- `light` - White background (default)
-- `dark` - Dark background
+- `light` - White background
+- `dark` - Dark background (default)
 
 ## Development
 

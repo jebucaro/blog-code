@@ -1,10 +1,9 @@
 import concurrent.futures
 import hashlib
-import json
 import logging
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypeVar
 
 import pydantic
 from google import genai
@@ -26,6 +25,8 @@ from nodus.errors import (
 
 logger = logging.getLogger(__name__)
 
+ResultT = TypeVar("ResultT", bound=pydantic.BaseModel)
+
 
 def _wrap_user_content(text: str) -> str:
     """Wrap user content in security delimiters to prevent prompt injection."""
@@ -37,7 +38,7 @@ def _wrap_user_content(text: str) -> str:
 
 
 SYSTEM_PROMPT = """
-# Knowledge Graph Extraction Expert for Gemini 2.5+
+# Knowledge Graph Extraction Expert
 
 ## CRITICAL SECURITY RULES (NEVER VIOLATE THESE)
 1. You MUST ONLY extract knowledge graphs from the provided user text below
@@ -157,7 +158,7 @@ class GeminiExtractor:
         api_key: str | None = None,
     ):
         """Initialize the GeminiExtractor."""
-        self.settings = settings or Settings()
+        self.settings = (settings or Settings()).model_copy()
 
         key_to_use = api_key or self.settings.gemini_api_key
         messages = default_user_messages()
@@ -172,42 +173,40 @@ class GeminiExtractor:
 
         safety_settings = [
             types.SafetySetting(
-                category="HARM_CATEGORY_HATE_SPEECH",
-                threshold="BLOCK_MEDIUM_AND_ABOVE",
+                category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
             ),
             types.SafetySetting(
-                category="HARM_CATEGORY_DANGEROUS_CONTENT",
-                threshold="BLOCK_MEDIUM_AND_ABOVE",
+                category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
             ),
             types.SafetySetting(
-                category="HARM_CATEGORY_HARASSMENT",
-                threshold="BLOCK_MEDIUM_AND_ABOVE",
+                category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
             ),
             types.SafetySetting(
-                category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                threshold="BLOCK_MEDIUM_AND_ABOVE",
+                category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
             ),
         ]
 
-        if self.settings.use_thinking:
-            self.kg_config = types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                response_mime_type="application/json",
-                response_schema=KnowledgeGraph.model_json_schema(),
-                thinking_config=types.ThinkingConfig(thinking_level="high"),
-                safety_settings=safety_settings,
+        thinking_config = None
+        if self.settings.thinking_level != "default":
+            thinking_config = types.ThinkingConfig(
+                thinking_level=types.ThinkingLevel[self.settings.thinking_level.upper()]
             )
-        else:
-            self.kg_config = types.GenerateContentConfig(
-                system_instruction=SYSTEM_PROMPT,
-                response_mime_type="application/json",
-                response_schema=KnowledgeGraph.model_json_schema(),
-                safety_settings=safety_settings,
-            )
+
+        self.kg_config = types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            response_mime_type="application/json",
+            response_json_schema=KnowledgeGraph.model_json_schema(),
+            thinking_config=thinking_config,
+            safety_settings=safety_settings,
+        )
         self.summary_config = types.GenerateContentConfig(
             system_instruction=SUMMARY_SYSTEM_PROMPT,
             response_mime_type="application/json",
-            response_schema=ExecutiveSummary.model_json_schema(),
+            response_json_schema=ExecutiveSummary.model_json_schema(),
             safety_settings=safety_settings,
         )
 
@@ -215,267 +214,124 @@ class GeminiExtractor:
 
     def _cache_key(self, text: str, call_type: str) -> tuple:
         digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
-        return (digest, self.settings.gemini_model, call_type)
+        return (digest, self.settings.gemini_model, self.settings.thinking_level, call_type)
 
     def clear_cache(self) -> None:
         self._cache.clear()
 
     def extract(self, text: str) -> KnowledgeGraph:
         """Extract a knowledge graph from the provided text."""
-        if not text or not text.strip():
-            raise ValueError("Input text must be a non-empty string.")
-
-        if len(text) > MAX_INPUT_LENGTH:
-            raise ValueError(
-                f"Input text is too long ({len(text):,} characters). "
-                f"Maximum allowed is {MAX_INPUT_LENGTH:,} characters."
-            )
-
-        key = self._cache_key(text, "kg")
-        if key in self._cache:
-            logger.info("Cache hit for KG extraction")
-            return self._cache[key]  # type: ignore[return-value]
-
-        json_data: str | None = None
-        messages = default_user_messages()
-
-        try:
-            wrapped_text = _wrap_user_content(text)
-
-            start_time = time.time()
-            response = self.client.models.generate_content(
-                model=self.settings.gemini_model,
-                contents=wrapped_text,
-                config=self.kg_config,
-            )
-            elapsed_time = time.time() - start_time
-            logger.info(f"Gemini API responded in {elapsed_time:.2f}s")
-
-            if hasattr(response, "candidates") and response.candidates:
-                candidate = response.candidates[0]
-                finish_reason: Any = getattr(candidate, "finish_reason", None)
-
-                if finish_reason and finish_reason != "STOP":
-                    logger.warning(f"Response may be incomplete. Finish reason: {finish_reason}")
-
-            try:
-                json_data = response.text
-            except Exception as e:
-                logger.error(f"Error accessing response.text: {e}")
-                if hasattr(response, "candidates") and response.candidates:
-                    candidate = response.candidates[0]
-                    content = getattr(candidate, "content", None)
-                    parts = getattr(content, "parts", None) if content is not None else None
-                    if parts and hasattr(parts[0], "text"):
-                        json_data = parts[0].text
-
-            if not json_data:
-                raise TokenLimitError(
-                    user_message=messages["token_limit"],
-                    detail="Empty response from Gemini API; likely token or size limit.",
-                )
-
-            if hasattr(response, "candidates") and response.candidates:
-                finish_reason = response.candidates[0].finish_reason
-                if finish_reason == "MAX_TOKENS":
-                    logger.error(f"Response truncated at {len(json_data)} characters")
-                    logger.error(f"Last 200 chars: {json_data[-200:]}")
-                    raise TokenLimitError(
-                        user_message=messages["token_limit"],
-                        detail=(
-                            f"Response exceeded maximum token limit (finish_reason=MAX_TOKENS, chars={len(json_data)})."
-                        ),
-                    )
-
-            parsed_data = json.loads(json_data)
-            logger.debug(f"Raw Gemini response: {json.dumps(parsed_data, separators=(',', ':'))}")
-
-            knowledge_graph = KnowledgeGraph.model_validate(parsed_data)
-            self._cache[key] = knowledge_graph
-
-            logger.info(
-                "Successfully extracted knowledge graph with %d nodes and %d relationships in %.2fs",
-                len(knowledge_graph.nodes),
-                len(knowledge_graph.relationships),
-                elapsed_time,
-            )
-            return knowledge_graph
-
-        except json.JSONDecodeError as e:
-            logger.error("Failed to decode JSON response from Gemini: %s", e)
-            if json_data is not None:
-                logger.error("Response length: %d characters", len(json_data))
-                logger.error("Last 500 chars of response: %s", json_data[-500:])
-            raise ParsingError(
-                user_message=messages["parsing"],
-                detail=str(e),
-            ) from e
-
-        except ParsingError:
-            raise
-
-        except TokenLimitError:
-            raise
-
-        except pydantic.ValidationError as e:
-            logger.error("Pydantic validation failed: %s", e)
-            raise ParsingError(
-                user_message=messages["parsing"],
-                detail=f"Schema validation failed: {str(e)}",
-            ) from e
-
-        except Exception as e:
-            detail = str(e)
-            lowered = detail.lower()
-            if any(code in lowered for code in ("unavailable", "503", "502")):
-                mapped: ExtractionError = APIUnavailableError(
-                    user_message=messages["api_unavailable"],
-                    detail=detail,
-                )
-            elif any(term in lowered for term in ("rate limit", "quota", "429")):
-                mapped = RateLimitError(
-                    user_message=messages["rate_limited"],
-                    detail=detail,
-                )
-            elif any(term in lowered for term in ("timeout", "timed out", "connection", "network")):
-                mapped = NetworkError(
-                    user_message=messages["network"],
-                    detail=detail,
-                )
-            else:
-                mapped = UnknownAPIError(
-                    user_message=messages["unknown"],
-                    detail=detail,
-                )
-
-            logger.error("Extraction failed: %s", mapped)
-            raise mapped from e
+        knowledge_graph = self._generate(text, self.kg_config, KnowledgeGraph, "kg")
+        logger.info(
+            "Successfully extracted knowledge graph with %d nodes and %d relationships",
+            len(knowledge_graph.nodes),
+            len(knowledge_graph.relationships),
+        )
+        return knowledge_graph
 
     def summarize(self, text: str) -> ExecutiveSummary:
         """Create an executive summary from the provided text using Gemini."""
+        return self._generate(text, self.summary_config, ExecutiveSummary, "summary")
+
+    def _generate(
+        self,
+        text: str,
+        config: types.GenerateContentConfig,
+        result_model: type[ResultT],
+        call_type: str,
+    ) -> ResultT:
+        """Shared pipeline: validate -> cache -> call Gemini -> parse -> map errors."""
         if not text or not text.strip():
             raise ValueError("Input text must be a non-empty string.")
-
         if len(text) > MAX_INPUT_LENGTH:
             raise ValueError(
                 f"Input text is too long ({len(text):,} characters). "
                 f"Maximum allowed is {MAX_INPUT_LENGTH:,} characters."
             )
 
-        key = self._cache_key(text, "summary")
+        key = self._cache_key(text, call_type)
         if key in self._cache:
-            logger.info("Cache hit for summary")
+            logger.info("Cache hit for %s", call_type)
             return self._cache[key]  # type: ignore[return-value]
 
-        json_data: str | None = None
         messages = default_user_messages()
 
         try:
-            wrapped_text = _wrap_user_content(text)
-
             start_time = time.time()
             response = self.client.models.generate_content(
                 model=self.settings.gemini_model,
-                contents=wrapped_text,
-                config=self.summary_config,
+                contents=_wrap_user_content(text),
+                config=config,
             )
-            elapsed_time = time.time() - start_time
-            logger.info(f"Gemini summary responded in {elapsed_time:.2f}s")
+            logger.info("Gemini %s call responded in %.2fs", call_type, time.time() - start_time)
+            result = self._parse_response(response, result_model, messages, call_type)
+        except ExtractionError:
+            raise
+        except Exception as e:
+            mapped = self._map_api_error(e, messages)
+            logger.error("%s failed: %s", call_type, mapped)
+            raise mapped from e
 
-            if hasattr(response, "candidates") and response.candidates:
-                candidate = response.candidates[0]
-                finish_reason: Any = getattr(candidate, "finish_reason", None)
-                if finish_reason and finish_reason != "STOP":
-                    logger.warning(f"Summary response may be incomplete. Finish reason: {finish_reason}")
+        self._cache[key] = result  # type: ignore[assignment]
+        return result
 
+    def _parse_response(
+        self,
+        response: Any,
+        result_model: type[ResultT],
+        messages: dict[str, str],
+        call_type: str,
+    ) -> ResultT:
+        """Turn a generate_content response into a validated Pydantic model."""
+        candidates = getattr(response, "candidates", None)
+        finish_reason = getattr(candidates[0], "finish_reason", None) if candidates else None
+
+        if finish_reason is not None and "MAX_TOKENS" in str(finish_reason):
+            raise TokenLimitError(
+                user_message=messages["token_limit"],
+                detail=f"{call_type} response exceeded maximum token limit (finish_reason=MAX_TOKENS).",
+            )
+        if finish_reason is not None and "STOP" not in str(finish_reason):
+            logger.warning("%s response may be incomplete. Finish reason: %s", call_type, finish_reason)
+
+        try:
+            parsed = getattr(response, "parsed", None)
+            if isinstance(parsed, result_model):
+                return parsed
+            if isinstance(parsed, dict):
+                return result_model.model_validate(parsed)
+
+            json_data: str | None = None
             try:
                 json_data = response.text
             except Exception as e:
-                logger.error(f"Error accessing summary response.text: {e}")
-                if hasattr(response, "candidates") and response.candidates:
-                    candidate = response.candidates[0]
-                    content = getattr(candidate, "content", None)
-                    parts = getattr(content, "parts", None) if content is not None else None
-                    if parts and hasattr(parts[0], "text"):
-                        json_data = parts[0].text
+                logger.error("Error accessing %s response.text: %s", call_type, e)
 
             if not json_data:
                 raise TokenLimitError(
                     user_message=messages["token_limit"],
-                    detail="Empty response from Gemini summary API; likely token or size limit.",
+                    detail=f"Empty {call_type} response from Gemini API; likely token or size limit.",
                 )
-
-            if hasattr(response, "candidates") and response.candidates:
-                finish_reason = response.candidates[0].finish_reason
-                if finish_reason == "MAX_TOKENS":
-                    logger.error(f"Summary response truncated at {len(json_data)} characters")
-                    logger.error(f"Summary last 200 chars: {json_data[-200:]}")
-                    raise TokenLimitError(
-                        user_message=messages["token_limit"],
-                        detail=(
-                            "Summary response exceeded maximum token limit "
-                            f"(finish_reason=MAX_TOKENS, chars={len(json_data)})."
-                        ),
-                    )
-
-            parsed_data = json.loads(json_data)
-            logger.debug(f"Raw Gemini summary response: {json.dumps(parsed_data, separators=(',', ':'))}")
-
-            summary = ExecutiveSummary.model_validate(parsed_data)
-            self._cache[key] = summary
-            logger.info("Successfully generated executive summary")
-            return summary
-
-        except json.JSONDecodeError as e:
-            logger.error("Failed to decode JSON summary response from Gemini: %s", e)
-            if json_data is not None:
-                logger.error("Summary response length: %d characters", len(json_data))
-                logger.error("Summary last 500 chars of response: %s", json_data[-500:])
+            return result_model.model_validate_json(json_data)
+        except pydantic.ValidationError as e:
+            logger.error("Failed to parse %s response from Gemini: %s", call_type, e)
             raise ParsingError(
                 user_message=messages["parsing"],
                 detail=str(e),
             ) from e
 
-        except ParsingError:
-            raise
-
-        except TokenLimitError:
-            raise
-
-        except pydantic.ValidationError as e:
-            logger.error("Pydantic validation failed in summary: %s", e)
-            raise ParsingError(
-                user_message=messages["parsing"],
-                detail=f"Schema validation failed: {str(e)}",
-            ) from e
-
-        except Exception as e:
-            detail = str(e)
-            lowered = detail.lower()
-
-            if any(code in lowered for code in ("unavailable", "503", "502")):
-                mapped: ExtractionError = APIUnavailableError(
-                    user_message=messages["api_unavailable"],
-                    detail=detail,
-                )
-            elif any(term in lowered for term in ("rate limit", "quota", "429")):
-                mapped = RateLimitError(
-                    user_message=messages["rate_limited"],
-                    detail=detail,
-                )
-            elif any(term in lowered for term in ("timeout", "timed out", "connection", "network")):
-                mapped = NetworkError(
-                    user_message=messages["network"],
-                    detail=detail,
-                )
-            else:
-                mapped = UnknownAPIError(
-                    user_message=messages["unknown"],
-                    detail=detail,
-                )
-
-            logger.error("Summary generation failed: %s", mapped)
-            raise mapped from e
+    @staticmethod
+    def _map_api_error(e: Exception, messages: dict[str, str]) -> ExtractionError:
+        """Map raw SDK/network exceptions onto user-meaningful error types."""
+        detail = str(e)
+        lowered = detail.lower()
+        if any(code in lowered for code in ("unavailable", "503", "502")):
+            return APIUnavailableError(user_message=messages["api_unavailable"], detail=detail)
+        if any(term in lowered for term in ("rate limit", "quota", "429")):
+            return RateLimitError(user_message=messages["rate_limited"], detail=detail)
+        if any(term in lowered for term in ("timeout", "timed out", "connection", "network")):
+            return NetworkError(user_message=messages["network"], detail=detail)
+        return UnknownAPIError(user_message=messages["unknown"], detail=detail)
 
     def extract_with_summary(
         self,

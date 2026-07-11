@@ -4,11 +4,18 @@ import streamlit as st
 from streamlit.components.v1 import html
 
 from nodus.extractor import GeminiExtractor
-from nodus.settings import Settings, AVAILABLE_MODELS, MAX_INPUT_LENGTH
+from nodus.settings import Settings, AVAILABLE_MODELS, DEFAULT_MODEL, MAX_INPUT_LENGTH
 from nodus.visualizer import GraphVisualizer
 from nodus.errors import ExtractionError
 
 logger = logging.getLogger(__name__)
+
+THINKING_LEVEL_OPTIONS = {
+    "Model default": "default",
+    "Low": "low",
+    "Medium": "medium",
+    "High": "high",
+}
 
 
 class StreamlitApp:
@@ -53,10 +60,17 @@ class StreamlitApp:
                 value=st.session_state['settings'].gemini_api_key,
             )
 
+            current_model = st.session_state['settings'].gemini_model
+            if current_model not in AVAILABLE_MODELS:
+                logger.warning(
+                    "Configured model '%s' is not available; falling back to '%s'.",
+                    current_model, DEFAULT_MODEL,
+                )
+                current_model = DEFAULT_MODEL
             st.session_state['settings'].gemini_model = st.sidebar.selectbox(
                 "Model",
                 options=AVAILABLE_MODELS,
-                index=AVAILABLE_MODELS.index(st.session_state['settings'].gemini_model),
+                index=AVAILABLE_MODELS.index(current_model),
                 help="Choose the Gemini model for knowledge graph extraction.",
             )
 
@@ -71,14 +85,24 @@ class StreamlitApp:
                 ),
             )
 
-            st.session_state['settings'].use_thinking = st.sidebar.checkbox(
-                "Enable thinking mode",
-                value=st.session_state['settings'].use_thinking,
+            thinking_labels = list(THINKING_LEVEL_OPTIONS)
+            current_level = st.session_state['settings'].thinking_level
+            current_index = next(
+                (i for i, label in enumerate(thinking_labels)
+                 if THINKING_LEVEL_OPTIONS[label] == current_level),
+                0,
+            )
+            selected_label = st.sidebar.selectbox(
+                "Thinking level",
+                options=thinking_labels,
+                index=current_index,
                 help=(
-                    "Uses Gemini's extended reasoning for more accurate knowledge graph extraction. "
-                    "Produces higher-quality results but takes longer."
+                    "Controls how much reasoning Gemini uses during knowledge graph "
+                    "extraction. Higher levels are more accurate but slower. "
+                    "'Model default' uses each model's built-in level."
                 ),
             )
+            st.session_state['settings'].thinking_level = THINKING_LEVEL_OPTIONS[selected_label]
 
             st.caption(
                 "Nodus extracts entities and relationships from text using Gemini. "
@@ -127,12 +151,12 @@ class StreamlitApp:
             extract_button = st.button(
                 ":material/auto_awesome: Extract",
                 type="primary",
-                use_container_width=True,
+                width="stretch",
             )
             st.button(
                 ":material/delete_sweep: Clear",
                 type="secondary",
-                use_container_width=True,
+                width="stretch",
                 on_click=self.clear_callback,
             )
 
@@ -162,7 +186,7 @@ class StreamlitApp:
         if extractor is not None:
             s = st.session_state['settings']
             if (extractor.settings.gemini_model != s.gemini_model or
-                    extractor.settings.use_thinking != s.use_thinking):
+                    extractor.settings.thinking_level != s.thinking_level):
                 extractor.close()
                 st.session_state['extractor'] = None
 
@@ -256,7 +280,7 @@ class StreamlitApp:
             data=summary_text,
             file_name="executive_summary.txt",
             mime="text/plain",
-            use_container_width=True,
+            width="stretch",
         )
 
     def display_visualization(self):
@@ -279,7 +303,7 @@ class StreamlitApp:
                 data=html_content,
                 file_name="knowledge_graph.html",
                 mime="text/html",
-                use_container_width=True
+                width="stretch"
             )
 
             html(html_content, height=850, scrolling=True)
@@ -302,7 +326,7 @@ class StreamlitApp:
                 data=json_data,
                 file_name="knowledge_graph.json",
                 mime="application/json",
-                use_container_width=True
+                width="stretch"
             )
 
             st.subheader("Nodes")

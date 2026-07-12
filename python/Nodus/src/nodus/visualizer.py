@@ -166,7 +166,7 @@ class GraphVisualizer:
                         title=edge_tooltip,
                         width=2,
                         font={"size": 12, "color": self.theme["font_color"], "strokeWidth": 2,
-                              "strokeColor": self.theme["edge_font_stroke"]},
+                              "strokeColor": self.theme["edge_font_stroke"], "align": "top"},
                         arrows={"to": {"enabled": True, "scaleFactor": 1.2}}
                     )
             except Exception:
@@ -179,9 +179,10 @@ class GraphVisualizer:
                     "forceAtlas2Based": {
                         "gravitationalConstant": -100,
                         "centralGravity": 0.005,
-                        "springLength": 150,
+                        "springLength": 200,
                         "springConstant": 0.08,
-                        "damping": 0.4
+                        "damping": 0.4,
+                        "avoidOverlap": 0.5
                     },
                     "minVelocity": 0.75,
                     "solver": "forceAtlas2Based",

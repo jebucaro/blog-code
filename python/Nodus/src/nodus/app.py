@@ -4,6 +4,7 @@ import streamlit as st
 from streamlit.components.v1 import html
 
 from nodus.extractor import GeminiExtractor
+from nodus.repair import repair_graph
 from nodus.settings import Settings, AVAILABLE_MODELS, DEFAULT_MODEL, MAX_INPUT_LENGTH
 from nodus.visualizer import GraphVisualizer
 from nodus.errors import ExtractionError
@@ -38,6 +39,8 @@ class StreamlitApp:
         """Initialize session state variables"""
         if 'knowledge_graph' not in st.session_state:
             st.session_state['knowledge_graph'] = None
+        if 'repair_report' not in st.session_state:
+            st.session_state['repair_report'] = None
         if 'executive_summary' not in st.session_state:
             st.session_state['executive_summary'] = None
         if 'settings' not in st.session_state:
@@ -214,6 +217,7 @@ class StreamlitApp:
 
                 if not knowledge_graph.nodes or not knowledge_graph.relationships:
                     st.session_state['knowledge_graph'] = None
+                    st.session_state['repair_report'] = None
                     st.warning(
                         ":warning: Extraction completed but returned an empty knowledge graph. "
                         "Try providing more detailed text or a different passage."
@@ -221,7 +225,9 @@ class StreamlitApp:
                     logger.info("Extraction returned an empty knowledge graph.")
                     return
 
-                st.session_state['knowledge_graph'] = knowledge_graph
+                repaired_graph, repair_report = repair_graph(knowledge_graph)
+                st.session_state['knowledge_graph'] = repaired_graph
+                st.session_state['repair_report'] = repair_report
 
                 st.toast("Knowledge graph extracted successfully.", icon=":material/check_circle:")
                 logger.info("Summary and knowledge graph extracted successfully.")
@@ -289,14 +295,37 @@ class StreamlitApp:
             st.info(":information_source: No knowledge graph data available to visualize.")
             return
 
+        report = st.session_state.get('repair_report')
+        show_isolated = st.toggle(
+            "Show isolated nodes",
+            value=False,
+            help="Include nodes that have no relationships in the visualization.",
+        )
+        if report and report.has_repairs:
+            parts = []
+            if report.remapped_endpoints:
+                parts.append(f"repaired {len(report.remapped_endpoints)} edge reference(s)")
+            if report.placeholder_nodes:
+                parts.append(f"added {len(report.placeholder_nodes)} placeholder node(s)")
+            if report.dropped_self_loops:
+                parts.append(f"dropped {report.dropped_self_loops} self-loop(s)")
+            if report.isolated_nodes:
+                state = "shown" if show_isolated else "hidden"
+                parts.append(f"{len(report.isolated_nodes)} isolated node(s) {state}")
+            st.caption(":material/build: " + " · ".join(parts))
+
         try:
             try:
                 theme = "dark" if st.context.theme.base == "dark" else "light"
             except (AttributeError, KeyError):
                 theme = st.session_state['settings'].viz_theme
             visualizer = GraphVisualizer(st.session_state['settings'], theme=theme)
+            visualizer.show_isolated = show_isolated
 
-            html_content = visualizer.generate_html(st.session_state["knowledge_graph"])
+            placeholder_ids = set(report.placeholder_nodes) if report else None
+            html_content = visualizer.generate_html(
+                st.session_state["knowledge_graph"], placeholder_ids=placeholder_ids
+            )
 
             st.download_button(
                 label=":material/download: Download visualization (HTML)",
@@ -399,6 +428,7 @@ class StreamlitApp:
                 logger.warning(f"Error closing extractor: {e}")
 
         st.session_state.knowledge_graph = None
+        st.session_state.repair_report = None
         st.session_state.executive_summary = None
         st.session_state.extractor = None
         st.session_state.input_text = ''

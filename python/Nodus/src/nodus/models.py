@@ -33,9 +33,10 @@ class Node(BaseModel):
     )
     type: str = Field(
         description=(
-            "The general type of the entity, always lowercase and singular. "
-            "Example: 'person', 'occupation', 'hobby'."
-        )
+            "The general category of the entity, always lowercase. "
+            "Must be one of: " + ", ".join(NODE_TYPES) + "."
+        ),
+        json_schema_extra={"enum": NODE_TYPES},
     )
 
     @field_validator('id')
@@ -88,7 +89,12 @@ class Node(BaseModel):
 class Relationship(BaseModel):
     """A relationship between two nodes in the knowledge graph."""
     id: str = Field(description="Unique human-readable identifier for the relationship")
-    type: str = Field(description="Relationship type (e.g., 'works_at', 'located_in')")
+    type: str = Field(
+        description=(
+            "Relationship type: a general, timeless, UPPERCASE verb phrase "
+            "with underscores (e.g., 'WORKS_AT', 'LOCATED_IN')."
+        )
+    )
     source_node_id: str = Field(description="ID of the source node")
     target_node_id: str = Field(description="ID of the target node")
 

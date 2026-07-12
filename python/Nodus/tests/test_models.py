@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from nodus.models import KnowledgeGraph, Node, Relationship
+from nodus.models import KnowledgeGraph, Node, Relationship, NODE_TYPES
 
 
 class TestNode:
@@ -153,3 +153,26 @@ class TestKnowledgeGraph:
         ]
         kg = KnowledgeGraph(relationships=rels)
         assert len(kg.relationships) == 2
+
+
+class TestKnowledgeGraphSchema:
+    def test_node_type_enum_in_schema(self):
+        schema = KnowledgeGraph.model_json_schema()
+        node_type_schema = schema["$defs"]["Node"]["properties"]["type"]
+        assert node_type_schema["enum"] == NODE_TYPES
+
+    def test_node_type_description_uses_controlled_vocabulary(self):
+        schema = KnowledgeGraph.model_json_schema()
+        desc = schema["$defs"]["Node"]["properties"]["type"]["description"]
+        assert "person" in desc
+        assert "occupation" not in desc and "hobby" not in desc
+
+    def test_relationship_type_description_uses_uppercase_examples(self):
+        schema = KnowledgeGraph.model_json_schema()
+        desc = schema["$defs"]["Relationship"]["properties"]["type"]["description"]
+        assert "WORKS_AT" in desc
+        assert "'works_at'" not in desc
+
+    def test_unknown_node_type_still_coerces_to_other(self):
+        node = Node(id="alice", type="astronaut_dog")
+        assert node.type == "other"

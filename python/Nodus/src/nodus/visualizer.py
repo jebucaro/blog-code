@@ -1,3 +1,4 @@
+import json
 import logging
 import webbrowser
 from pathlib import Path
@@ -208,14 +209,17 @@ class GraphVisualizer:
 
         return net, types_present
 
+    def _panel_style(self) -> tuple[str, str]:
+        """(background, border) colors for theme-matched overlay panels."""
+        if self.theme_name == "dark":
+            return "rgba(34,34,34,0.88)", "#444444"
+        return "rgba(255,255,255,0.92)", "#cccccc"
+
     def _legend_html(self, types_present: set[str]) -> str:
         """Fixed-position legend overlay for the node types actually rendered."""
         if not types_present:
             return ""
-        if self.theme_name == "dark":
-            panel_bg, panel_border = "rgba(34,34,34,0.88)", "#444444"
-        else:
-            panel_bg, panel_border = "rgba(255,255,255,0.92)", "#cccccc"
+        panel_bg, panel_border = self._panel_style()
         items = "".join(
             '<div style="display:flex;align-items:center;gap:6px;margin:2px 0;">'
             f'<span style="width:10px;height:10px;border-radius:50%;'
@@ -291,12 +295,101 @@ class GraphVisualizer:
             '    }\n'
             '}, 2000);\n'
         )
-        html_content = html_content.replace(
-            "network = new vis.Network(container, data, options);",
-            "network = new vis.Network(container, data, options);\n" + fit_script
+        # PNG export: temporarily raise devicePixelRatio (vis re-reads it in
+        # setSize) so the canvas backing store densifies without its CSS size
+        # ever changing — vis's setSize camera math is then a provable no-op
+        # (width/height ratios are exactly 1) and the view cannot shift.
+        panel_bg, panel_border = self._panel_style()
+        legend_items = [[t, self._get_color_for_node_type(t)] for t in sorted(types_present)]
+        export_script = (
+            'var _nodusBg = ' + json.dumps(self.theme["background"]) + ';\n'
+            'var _nodusFontColor = ' + json.dumps(self.theme["font_color"]) + ';\n'
+            'var _nodusPanelBg = ' + json.dumps(panel_bg) + ';\n'
+            'var _nodusLegendItems = ' + json.dumps(legend_items) + ';\n'
+            'var _nodusExportScale = 3;\n'
+            'function _nodusDrawLegend(ctx, outW, viewW) {\n'
+            '    if (!_nodusLegendItems.length) return;\n'
+            '    var fs = 12 * outW / viewW;\n'
+            '    var lh = fs * 1.5, pad = fs, dot = fs * 0.8;\n'
+            '    ctx.font = fs + "px sans-serif";\n'
+            '    var maxw = 0;\n'
+            '    _nodusLegendItems.forEach(function(it) {\n'
+            '        maxw = Math.max(maxw, ctx.measureText(it[0]).width);\n'
+            '    });\n'
+            '    var bw = pad * 2 + dot + fs * 0.5 + maxw;\n'
+            '    var bh = pad * 2 + lh * (_nodusLegendItems.length - 1) + fs;\n'
+            '    var bx = ctx.canvas.width - bw - pad, by = pad;\n'
+            '    ctx.fillStyle = _nodusPanelBg;\n'
+            '    ctx.fillRect(bx, by, bw, bh);\n'
+            '    ctx.textBaseline = "middle";\n'
+            '    _nodusLegendItems.forEach(function(it, i) {\n'
+            '        var cy = by + pad + lh * i + fs / 2;\n'
+            '        ctx.fillStyle = it[1];\n'
+            '        ctx.beginPath();\n'
+            '        ctx.arc(bx + pad + dot / 2, cy, dot / 2, 0, 2 * Math.PI);\n'
+            '        ctx.fill();\n'
+            '        ctx.fillStyle = _nodusFontColor;\n'
+            '        ctx.fillText(it[0], bx + pad + dot + fs * 0.5, cy);\n'
+            '    });\n'
+            '}\n'
+            # Injected inside pyvis's drawGraph() body, so this must be
+            # window-assigned to stay reachable from the button's onclick.
+            # The whole cycle (fit -> render -> capture -> restore) runs
+            # synchronously inside the click handler: the browser never
+            # paints an intermediate frame, so the visible view never moves.
+            'window.nodusExportPng = function() {\n'
+            '    var btn = document.getElementById("nodus-export");\n'
+            '    var container = document.getElementById("mynetwork");\n'
+            '    var viewW = container.clientWidth;\n'
+            '    var savedPos = network.getViewPosition();\n'
+            '    var savedScale = network.getScale();\n'
+            '    var dprDesc = Object.getOwnPropertyDescriptor(window, "devicePixelRatio");\n'
+            '    var dpr = window.devicePixelRatio || 1;\n'
+            '    btn.disabled = true;\n'
+            '    try {\n'
+            '        Object.defineProperty(window, "devicePixelRatio",\n'
+            '            { value: dpr * _nodusExportScale, configurable: true });\n'
+            '        network.setSize(' + json.dumps(self.viz_width) + ', '
+                         + json.dumps(self.viz_height) + ');\n'
+            '        network.fit({ animation: false });\n'
+            '        network.redraw();\n'
+            '        var src = network.canvas.frame.canvas;\n'
+            '        var out = document.createElement("canvas");\n'
+            '        out.width = src.width;\n'
+            '        out.height = src.height;\n'
+            '        var ctx = out.getContext("2d");\n'
+            '        ctx.fillStyle = _nodusBg;\n'
+            '        ctx.fillRect(0, 0, out.width, out.height);\n'
+            '        ctx.drawImage(src, 0, 0);\n'
+            '        _nodusDrawLegend(ctx, out.width, viewW);\n'
+            '        var link = document.createElement("a");\n'
+            '        link.download = "knowledge_graph.png";\n'
+            '        link.href = out.toDataURL("image/png");\n'
+            '        link.click();\n'
+            '    } finally {\n'
+            '        network.moveTo({ position: savedPos, scale: savedScale, animation: false });\n'
+            '        if (dprDesc) { Object.defineProperty(window, "devicePixelRatio", dprDesc); }\n'
+            '        else { delete window.devicePixelRatio; }\n'
+            '        network.setSize(' + json.dumps(self.viz_width) + ', '
+                         + json.dumps(self.viz_height) + ');\n'
+            '        network.redraw();\n'
+            '        btn.disabled = false;\n'
+            '    }\n'
+            '};\n'
         )
         html_content = html_content.replace(
-            "</body>", self._legend_html(types_present) + "</body>"
+            "network = new vis.Network(container, data, options);",
+            "network = new vis.Network(container, data, options);\n" + fit_script + export_script
+        )
+        export_button = (
+            f'<button id="nodus-export" onclick="nodusExportPng()" '
+            f'style="position:fixed;top:12px;left:12px;z-index:10;'
+            f'background:{panel_bg};color:{self.theme["font_color"]};'
+            f'border:1px solid {panel_border};border-radius:8px;padding:6px 12px;'
+            f'font-family:sans-serif;font-size:12px;cursor:pointer;">Export PNG</button>'
+        )
+        html_content = html_content.replace(
+            "</body>", self._legend_html(types_present) + export_button + "</body>"
         )
         logger.info("Generated HTML visualization in memory")
         return html_content

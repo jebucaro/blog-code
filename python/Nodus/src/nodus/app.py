@@ -1,7 +1,6 @@
 import logging
 
 import streamlit as st
-from streamlit.components.v1 import html
 
 from nodus.extractor import GeminiExtractor
 from nodus.repair import repair_graph
@@ -296,10 +295,16 @@ class StreamlitApp:
             return
 
         report = st.session_state.get('repair_report')
+        has_isolated = bool(report and report.isolated_nodes)
         show_isolated = st.toggle(
             "Show isolated nodes",
             value=False,
-            help="Include nodes that have no relationships in the visualization.",
+            disabled=not has_isolated,
+            help=(
+                "Include nodes that have no relationships in the visualization."
+                if has_isolated
+                else "This graph has no isolated nodes — every node participates in a relationship."
+            ),
         )
         if report and report.has_repairs:
             parts = []
@@ -335,7 +340,7 @@ class StreamlitApp:
                 width="stretch"
             )
 
-            html(html_content, height=850, scrolling=True)
+            st.iframe(html_content, height=850)
 
         except Exception as e:
             st.error(":x: There was a problem rendering the visualization. The raw data is still available below.")

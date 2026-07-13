@@ -80,3 +80,27 @@ class TestIsolatedNodes:
         viz.show_isolated = True
         html = viz.generate_html(make_graph())
         assert "loner" in html
+
+
+class TestPngExport:
+    def test_export_button_and_script_present(self):
+        html = make_visualizer().generate_html(make_graph())
+        assert 'id="nodus-export"' in html
+        # Must be window-assigned: the script is injected inside pyvis's
+        # drawGraph() body, so a plain function declaration would be scoped
+        # to drawGraph and unreachable from the button's global onclick.
+        assert "window.nodusExportPng = function" in html
+        assert "function nodusExportPng()" not in html
+        # Export must restore the user's exact view, not re-fit the graph.
+        assert "network.getViewPosition()" in html
+        assert "network.moveTo({ position: savedPos, scale: savedScale" in html
+        # High-res capture must densify via devicePixelRatio, never by
+        # changing the canvas CSS size (which shifts the vis camera).
+        assert 'Object.defineProperty(window, "devicePixelRatio"' in html
+        assert "_nodusExportScale) + \"px\"" not in html
+
+    def test_export_legend_items_match_rendered_types(self):
+        html = make_visualizer().generate_html(make_graph())
+        assert '["person", "' in html
+        assert '["organization", "' in html
+        assert '["concept", "' not in html

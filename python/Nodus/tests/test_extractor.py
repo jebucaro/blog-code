@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from google.genai import types
 
 from nodus.errors import MissingAPIKeyError
 from nodus.extractor import GeminiExtractor
@@ -34,33 +33,35 @@ class TestInit:
 class TestConfigs:
     def test_kg_config_uses_json_schema(self):
         extractor = make_extractor()
-        assert extractor.kg_config.response_json_schema == KnowledgeGraph.model_json_schema()
-        assert extractor.kg_config.response_mime_type == "application/json"
+        response_format = extractor.kg_config["response_format"]
+        assert response_format["schema"] == KnowledgeGraph.model_json_schema()
+        assert response_format["mime_type"] == "application/json"
 
     def test_summary_config_uses_json_schema(self):
         extractor = make_extractor()
-        assert extractor.summary_config.response_json_schema == ExecutiveSummary.model_json_schema()
-        assert extractor.summary_config.response_mime_type == "application/json"
+        response_format = extractor.summary_config["response_format"]
+        assert response_format["schema"] == ExecutiveSummary.model_json_schema()
+        assert response_format["mime_type"] == "application/json"
 
-    def test_default_thinking_level_sends_no_thinking_config(self):
+    def test_default_thinking_level_sends_no_generation_config(self):
         extractor = make_extractor()
-        assert extractor.kg_config.thinking_config is None
+        assert "generation_config" not in extractor.kg_config
 
-    @pytest.mark.parametrize(
-        "level,expected",
-        [
-            ("low", types.ThinkingLevel.LOW),
-            ("medium", types.ThinkingLevel.MEDIUM),
-            ("high", types.ThinkingLevel.HIGH),
-        ],
-    )
-    def test_explicit_thinking_level_maps_to_enum(self, level, expected):
+    @pytest.mark.parametrize("level", ["low", "medium", "high"])
+    def test_explicit_thinking_level_sets_generation_config(self, level):
         extractor = make_extractor(thinking_level=level)
-        assert extractor.kg_config.thinking_config.thinking_level == expected
+        assert extractor.kg_config["generation_config"] == {"thinking_level": level}
 
-    def test_summary_config_never_gets_thinking_config(self):
+    def test_summary_config_never_gets_generation_config(self):
         extractor = make_extractor(thinking_level="high")
-        assert extractor.summary_config.thinking_config is None
+        assert "generation_config" not in extractor.summary_config
+
+    def test_configs_do_not_send_safety_settings(self):
+        """The standard Gemini API rejects safety_settings on the Interactions
+        endpoint (400 invalid_request) - only Gemini Enterprise supports it."""
+        extractor = make_extractor()
+        assert "safety_settings" not in extractor.kg_config
+        assert "safety_settings" not in extractor.summary_config
 
 
 class TestCacheKey:
@@ -88,14 +89,11 @@ from nodus.errors import (  # noqa: E402
 from nodus.settings import MAX_INPUT_LENGTH  # noqa: E402
 
 
-def make_response(parsed=None, text=None, finish_reason="STOP"):
-    """Build a fake generate_content response."""
+def make_response(output_text=None, status="completed"):
+    """Build a fake Interactions API response."""
     response = MagicMock()
-    response.parsed = parsed
-    response.text = text
-    candidate = MagicMock()
-    candidate.finish_reason = finish_reason
-    response.candidates = [candidate]
+    response.output_text = output_text
+    response.status = status
     return response
 
 
@@ -120,32 +118,19 @@ class TestExtract:
     def test_returns_parsed_knowledge_graph(self):
         extractor = make_extractor()
         kg = sample_kg()
-        extractor.client.models.generate_content.return_value = make_response(parsed=kg)
-        result = extractor.extract("Alice works at Acme Corp.")
-        assert result is kg
-
-    def test_parsed_dict_is_validated(self):
-        extractor = make_extractor()
-        payload = sample_kg().model_dump()
-        extractor.client.models.generate_content.return_value = make_response(parsed=payload)
+        extractor.client.interactions.create.return_value = make_response(output_text=kg.model_dump_json())
         result = extractor.extract("Alice works at Acme Corp.")
         assert isinstance(result, KnowledgeGraph)
         assert result.nodes[0].id == "alice"
 
-    def test_falls_back_to_text_when_parsed_missing(self):
-        extractor = make_extractor()
-        json_text = sample_kg().model_dump_json()
-        extractor.client.models.generate_content.return_value = make_response(text=json_text)
-        result = extractor.extract("Alice works at Acme Corp.")
-        assert isinstance(result, KnowledgeGraph)
-        assert len(result.nodes) == 2
-
     def test_caches_by_text_model_and_thinking(self):
         extractor = make_extractor()
-        extractor.client.models.generate_content.return_value = make_response(parsed=sample_kg())
+        extractor.client.interactions.create.return_value = make_response(
+            output_text=sample_kg().model_dump_json()
+        )
         extractor.extract("Alice works at Acme Corp.")
         extractor.extract("Alice works at Acme Corp.")
-        assert extractor.client.models.generate_content.call_count == 1
+        assert extractor.client.interactions.create.call_count == 1
 
     def test_empty_input_raises_value_error(self):
         extractor = make_extractor()
@@ -157,23 +142,23 @@ class TestExtract:
         with pytest.raises(ValueError):
             extractor.extract("x" * (MAX_INPUT_LENGTH + 1))
 
-    def test_max_tokens_raises_token_limit_error(self):
+    def test_incomplete_status_raises_token_limit_error(self):
         extractor = make_extractor()
-        extractor.client.models.generate_content.return_value = make_response(
-            text='{"nodes": [', finish_reason="MAX_TOKENS"
+        extractor.client.interactions.create.return_value = make_response(
+            output_text='{"nodes": [', status="incomplete"
         )
         with pytest.raises(TokenLimitError):
             extractor.extract("some text")
 
     def test_empty_response_raises_token_limit_error(self):
         extractor = make_extractor()
-        extractor.client.models.generate_content.return_value = make_response()
+        extractor.client.interactions.create.return_value = make_response()
         with pytest.raises(TokenLimitError):
             extractor.extract("some text")
 
     def test_invalid_json_raises_parsing_error(self):
         extractor = make_extractor()
-        extractor.client.models.generate_content.return_value = make_response(text="not json")
+        extractor.client.interactions.create.return_value = make_response(output_text="not json")
         with pytest.raises(ParsingError):
             extractor.extract("some text")
 
@@ -188,7 +173,7 @@ class TestExtract:
     )
     def test_api_errors_are_mapped(self, message, expected):
         extractor = make_extractor()
-        extractor.client.models.generate_content.side_effect = Exception(message)
+        extractor.client.interactions.create.side_effect = Exception(message)
         with pytest.raises(expected):
             extractor.extract("some text")
 
@@ -197,17 +182,19 @@ class TestSummarize:
     def test_returns_parsed_summary(self):
         extractor = make_extractor()
         summary = ExecutiveSummary(summary="Overview: Alice works at Acme.", key_points=["Alice"])
-        extractor.client.models.generate_content.return_value = make_response(parsed=summary)
+        extractor.client.interactions.create.return_value = make_response(
+            output_text=summary.model_dump_json()
+        )
         result = extractor.summarize("Alice works at Acme Corp.")
-        assert result is summary
+        assert result == summary
 
     def test_summary_and_kg_have_separate_cache_entries(self):
         extractor = make_extractor()
         summary = ExecutiveSummary(summary="Overview: Alice works at Acme.")
-        extractor.client.models.generate_content.side_effect = [
-            make_response(parsed=summary),
-            make_response(parsed=sample_kg()),
+        extractor.client.interactions.create.side_effect = [
+            make_response(output_text=summary.model_dump_json()),
+            make_response(output_text=sample_kg().model_dump_json()),
         ]
         extractor.summarize("Alice works at Acme Corp.")
         extractor.extract("Alice works at Acme Corp.")
-        assert extractor.client.models.generate_content.call_count == 2
+        assert extractor.client.interactions.create.call_count == 2

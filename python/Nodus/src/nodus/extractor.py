@@ -7,7 +7,6 @@ from typing import Any, TypeVar
 
 import pydantic
 from google import genai
-from google.genai import types
 
 from nodus.models import KnowledgeGraph, ExecutiveSummary, ExtractionResult, NODE_TYPES, RELATIONSHIP_TYPE_EXAMPLES
 from nodus.settings import Settings, MAX_INPUT_LENGTH
@@ -190,44 +189,28 @@ class GeminiExtractor:
         self.client = genai.Client(api_key=key_to_use)
         self._cache: dict[tuple, KnowledgeGraph | ExecutiveSummary] = {}
 
-        safety_settings = [
-            types.SafetySetting(
-                category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            ),
-            types.SafetySetting(
-                category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            ),
-            types.SafetySetting(
-                category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
-                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            ),
-            types.SafetySetting(
-                category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                threshold=types.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            ),
-        ]
-
-        thinking_config = None
+        # NOTE: safety_settings is accepted by the SDK's request schema but rejected
+        # (400 invalid_request) by the standard Gemini API on the Interactions endpoint;
+        # it's only available on the Gemini Enterprise Agent Platform. Do not add it here.
+        self.kg_config: dict[str, Any] = {
+            "system_instruction": SYSTEM_PROMPT,
+            "response_format": {
+                "type": "text",
+                "mime_type": "application/json",
+                "schema": KnowledgeGraph.model_json_schema(),
+            },
+        }
         if self.settings.thinking_level != "default":
-            thinking_config = types.ThinkingConfig(
-                thinking_level=types.ThinkingLevel[self.settings.thinking_level.upper()]
-            )
+            self.kg_config["generation_config"] = {"thinking_level": self.settings.thinking_level}
 
-        self.kg_config = types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT,
-            response_mime_type="application/json",
-            response_json_schema=KnowledgeGraph.model_json_schema(),
-            thinking_config=thinking_config,
-            safety_settings=safety_settings,
-        )
-        self.summary_config = types.GenerateContentConfig(
-            system_instruction=SUMMARY_SYSTEM_PROMPT,
-            response_mime_type="application/json",
-            response_json_schema=ExecutiveSummary.model_json_schema(),
-            safety_settings=safety_settings,
-        )
+        self.summary_config: dict[str, Any] = {
+            "system_instruction": SUMMARY_SYSTEM_PROMPT,
+            "response_format": {
+                "type": "text",
+                "mime_type": "application/json",
+                "schema": ExecutiveSummary.model_json_schema(),
+            },
+        }
 
         logger.info("Initialized Gemini extractor")
 
@@ -255,7 +238,7 @@ class GeminiExtractor:
     def _generate(
         self,
         text: str,
-        config: types.GenerateContentConfig,
+        config: dict[str, Any],
         result_model: type[ResultT],
         call_type: str,
     ) -> ResultT:
@@ -277,10 +260,10 @@ class GeminiExtractor:
 
         try:
             start_time = time.time()
-            response = self.client.models.generate_content(
+            response = self.client.interactions.create(
                 model=self.settings.gemini_model,
-                contents=_wrap_user_content(text),
-                config=config,
+                input=_wrap_user_content(text),
+                **config,
             )
             logger.info("Gemini %s call responded in %.2fs", call_type, time.time() - start_time)
             result = self._parse_response(response, result_model, messages, call_type)
@@ -301,31 +284,19 @@ class GeminiExtractor:
         messages: dict[str, str],
         call_type: str,
     ) -> ResultT:
-        """Turn a generate_content response into a validated Pydantic model."""
-        candidates = getattr(response, "candidates", None)
-        finish_reason = getattr(candidates[0], "finish_reason", None) if candidates else None
+        """Turn an Interactions API response into a validated Pydantic model."""
+        status = getattr(response, "status", None)
 
-        if finish_reason is not None and "MAX_TOKENS" in str(finish_reason):
+        if status in ("incomplete", "budget_exceeded"):
             raise TokenLimitError(
                 user_message=messages["token_limit"],
-                detail=f"{call_type} response exceeded maximum token limit (finish_reason=MAX_TOKENS).",
+                detail=f"{call_type} response exceeded maximum token limit (status={status}).",
             )
-        if finish_reason is not None and "STOP" not in str(finish_reason):
-            logger.warning("%s response may be incomplete. Finish reason: %s", call_type, finish_reason)
+        if status is not None and status != "completed":
+            logger.warning("%s response may be incomplete. Status: %s", call_type, status)
 
         try:
-            parsed = getattr(response, "parsed", None)
-            if isinstance(parsed, result_model):
-                return parsed
-            if isinstance(parsed, dict):
-                return result_model.model_validate(parsed)
-
-            json_data: str | None = None
-            try:
-                json_data = response.text
-            except Exception as e:
-                logger.error("Error accessing %s response.text: %s", call_type, e)
-
+            json_data = getattr(response, "output_text", None)
             if not json_data:
                 raise TokenLimitError(
                     user_message=messages["token_limit"],

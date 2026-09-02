@@ -30,7 +30,6 @@ class StreamlitApp:
         st.set_page_config(
             page_title="Nodus",
             page_icon=":material/hub:",
-            layout="wide",
             initial_sidebar_state="auto",
         )
 

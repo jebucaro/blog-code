@@ -6,13 +6,13 @@ from nodus.settings import AVAILABLE_MODELS, DEFAULT_MODEL, THINKING_LEVELS, Set
 class TestModelLineup:
     def test_available_models(self):
         assert AVAILABLE_MODELS == [
-            "gemini-3.1-flash-lite",
-            "gemini-3.5-flash",
+            "gemini-3.5-flash-lite",
+            "gemini-3.8-flash",
             "gemini-3.1-pro-preview",
         ]
 
     def test_default_model_is_available(self):
-        assert DEFAULT_MODEL == "gemini-3.5-flash"
+        assert DEFAULT_MODEL == "gemini-3.8-flash"
         assert DEFAULT_MODEL in AVAILABLE_MODELS
 
 

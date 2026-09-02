@@ -5,12 +5,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Curated list of Gemini models suitable for knowledge graph extraction,
 # ordered fastest -> most capable
 AVAILABLE_MODELS = [
-    "gemini-3.1-flash-lite",
-    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.8-flash",
     "gemini-3.1-pro-preview",
 ]
 
-DEFAULT_MODEL = "gemini-3.5-flash"
+DEFAULT_MODEL = "gemini-3.8-flash"
 
 # Thinking levels the app exposes. "default" sends no thinking config so each
 # model uses its built-in default (MEDIUM on flash, HIGH on pro, MINIMAL on

@@ -44,7 +44,7 @@ Create a `.env` file in the project root:
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # Optional (defaults shown)
-GEMINI_MODEL=gemini-3.5-flash
+GEMINI_MODEL=gemini-3.8-flash
 THINKING_LEVEL=default
 VIZ_THEME=dark
 ```
@@ -70,8 +70,8 @@ This will:
 
 1. **Enter API Key**: Paste your Gemini API key in the sidebar (if not in `.env`)
 2. **Select Model**: Choose from:
-   - `gemini-3.1-flash-lite` - Fastest, most cost-effective
-   - `gemini-3.5-flash` - Balanced performance (default)
+   - `gemini-3.5-flash-lite` - Fastest, most cost-effective
+   - `gemini-3.8-flash` - Balanced performance (default)
    - `gemini-3.1-pro-preview` - Most capable, deepest reasoning
 3. **Pick a Thinking Level** (optional): "Model default" uses each model's built-in
    thinking level; Low/Medium/High trade speed for extraction quality.
@@ -148,8 +148,8 @@ The application supports three curated Gemini models:
 
 | Model | Best For | Speed | Cost |
 |-------|----------|-------|------|
-| `gemini-3.1-flash-lite` | Quick extractions, small texts | Fastest | Lowest |
-| `gemini-3.5-flash` | Balanced performance (default) | Fast | Medium |
+| `gemini-3.5-flash-lite` | Quick extractions, small texts | Fastest | Lowest |
+| `gemini-3.8-flash` | Balanced performance (default) | Fast | Medium |
 | `gemini-3.1-pro-preview` | Complex texts, high accuracy | Slower | Higher |
 
 ### Visualization Themes
@@ -157,6 +157,14 @@ The application supports three curated Gemini models:
 Set in `.env` or modify in code:
 - `light` - White background
 - `dark` - Dark background (default)
+
+### Content Safety
+
+Nodus calls Gemini via the Interactions API, which does not currently support
+the adjustable `safety_settings` (harassment, hate speech, sexually explicit,
+dangerous content). Only Gemini's always-on core protections (e.g. child
+safety) apply; the adjustable filters default to **Off**. Keep this in mind if
+you're feeding it untrusted or user-submitted text.
 
 ## Development
 

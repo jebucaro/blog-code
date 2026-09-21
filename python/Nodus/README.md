@@ -80,8 +80,11 @@ This will:
    - Paste text directly into the text area
 5. **Extract**: Click "Extract" to generate the knowledge graph
 6. **View Results**: Explore three tabs:
-   - **Visualization**: Interactive graph (drag, zoom, hover for details)
-   - **Raw Data**: Tables of nodes and relationships, full JSON
+   - **Visualization**: Interactive graph (drag, zoom, hover for details). Use the
+     relationship-type filter (bottom-left) to show or hide edges by type, with
+     "All"/"None" shortcuts. Filtering hides edges without disturbing the layout.
+   - **Raw Data**: Tables of nodes and relationships (grouped and sorted by
+     relationship type, then source, then target), plus full JSON in the same order
    - **Statistics**: Counts and distributions
 7. **Export**: Download HTML visualization or JSON data
 8. **Clear**: Reset everything and start over
@@ -133,6 +136,7 @@ Nodus/
 - Consistent color-coding by node type (MD5 hash-based)
 - Configurable themes (dark/light), physics simulation
 - Filters self-referencing and invalid relationships
+- Relationship-type filter overlay to show/hide edges by type without moving nodes
 
 ### 4. Web Interface (`app.py`)
 - Streamlit-based UI with session state management

@@ -163,6 +163,25 @@ class KnowledgeGraph(BaseModel):
         return self
 
 
+def sort_relationships(relationships: list["Relationship"]) -> list["Relationship"]:
+    """Return a new list of relationships grouped and alphabetized.
+
+    Relationships are sorted by (type, source_node_id, target_node_id), each
+    compared case-insensitively. The sort is stable, so relationships with an
+    identical key keep their original relative order. The input list is not
+    mutated. This is a presentation-only helper and has no effect on
+    deduplication or storage semantics.
+    """
+    return sorted(
+        relationships,
+        key=lambda rel: (
+            rel.type.lower(),
+            rel.source_node_id.lower(),
+            rel.target_node_id.lower(),
+        ),
+    )
+
+
 class ExecutiveSummary(BaseModel):
     """High-level executive summary of an input document."""
 

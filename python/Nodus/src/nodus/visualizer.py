@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import webbrowser
@@ -42,13 +43,18 @@ THEMES = {
         "background": "#222222",
         "font_color": "white",
         "default_node_color": "#7f7f7f",
-        "edge_font_stroke": "#000000"
+        "edge_font_stroke": "#000000",
+        # Translucent canvas-background color behind node labels, so an edge
+        # passing under a label doesn't visually merge with the text while
+        # still showing through.
+        "label_background": "rgba(34, 34, 34, 0.75)",
     },
     "light": {
         "background": "#ffffff",
         "font_color": "black",
         "default_node_color": "#7f7f7f",
-        "edge_font_stroke": "#ffffff"
+        "edge_font_stroke": "#ffffff",
+        "label_background": "rgba(255, 255, 255, 0.75)",
     }
 }
 
@@ -72,9 +78,39 @@ class GraphVisualizer:
         """Look up the semantic color for a node type, falling back to 'other'."""
         return self.type_colors.get(node_type, self.type_colors["other"])
 
+    def _get_color_for_relationship_type(self, rel_type: str) -> str:
+        """Deterministic color for a relationship type.
+
+        Relationship types are open-ended (the model can coin new ones beyond
+        RELATIONSHIP_TYPE_EXAMPLES), so unlike node types there's no fixed
+        palette to look up - the hue is derived from a hash of the type name
+        instead, keeping the same type the same color across renders.
+        """
+        digest = hashlib.md5(rel_type.encode("utf-8")).hexdigest()
+        hue = int(digest[:8], 16) % 360
+        saturation, lightness = (65, 65) if self.theme_name == "dark" else (70, 40)
+        return f"hsl({hue}, {saturation}%, {lightness}%)"
+
     def _format_relationship_tooltip(self, rel_type: str, source_label: str, target_label: str) -> str:
         """Create a readable tooltip for relationships"""
         return f"{source_label} → {rel_type.replace('_', ' ').title()} → {target_label}"
+
+    def _rendered_relationship_types(self, graph: KnowledgeGraph) -> list[str]:
+        """Distinct relationship types among edges that will actually render.
+
+        Mirrors the self-loop / dangling-endpoint filtering in _build_network so
+        the edge-type filter only lists types that are truly drawn. Returned
+        sorted case-insensitively for a stable, readable filter panel.
+        """
+        node_ids = {node.id for node in graph.nodes}
+        types = {
+            rel.type
+            for rel in graph.relationships
+            if (rel.source_node_id != rel.target_node_id
+                and rel.source_node_id in node_ids
+                and rel.target_node_id in node_ids)
+        }
+        return sorted(types, key=str.lower)
 
     def _build_network(
         self,
@@ -84,13 +120,15 @@ class GraphVisualizer:
         """Build a PyVis Network from a KnowledgeGraph; returns (network, rendered node types)."""
         placeholder_ids = placeholder_ids or set()
 
+        # NOTE: no font_color kwarg here - pyvis's Network(font_color=...) forces
+        # every node's `font` dict to {"color": font_color}, silently discarding
+        # per-node font options (including our contrast-aware label color below).
         net = Network(
             height=self.viz_height,
             width=self.viz_width,
             directed=True,
             notebook=False,
             bgcolor=self.theme["background"],
-            font_color=self.theme["font_color"]
         )
 
         node_dict = {node.id: node for node in graph.nodes}
@@ -129,7 +167,11 @@ class GraphVisualizer:
                     "title": tooltip,
                     "color": color,
                     "size": 30,
-                    "font": {"size": 14, "color": self.theme["font_color"]},
+                    "font": {
+                        "size": 14,
+                        "color": self.theme["font_color"],
+                        "background": self.theme["label_background"],
+                    },
                 }
                 if node.id in placeholder_ids:
                     node_options["shapeProperties"] = {"borderDashes": [5, 5]}
@@ -166,6 +208,8 @@ class GraphVisualizer:
                         label=display_label,
                         title=edge_tooltip,
                         width=2,
+                        color=self._get_color_for_relationship_type(rel.type),
+                        rel_type=rel.type,
                         font={"size": 12, "color": self.theme["font_color"], "strokeWidth": 2,
                               "strokeColor": self.theme["edge_font_stroke"], "align": "top"},
                         arrows={"to": {"enabled": True, "scaleFactor": 1.2}}
@@ -233,6 +277,81 @@ class GraphVisualizer:
             f'padding:8px 12px;font-family:sans-serif;font-size:12px;'
             f'color:{self.theme["font_color"]};">{items}</div>'
         )
+
+    def _edge_filter_html(self, rel_types: list[str]) -> str:
+        """Overlay panel + JS to show/hide edges by relationship type.
+
+        Doubles as a color legend: each row's swatch matches the color used
+        for that relationship type's edges in the graph.
+
+        Toggling a checkbox sets the `hidden` flag on matching edges via
+        edges.update(), which preserves node positions (unlike removing edges).
+        Renders nothing when there are no edge types to filter.
+        """
+        if not rel_types:
+            return ""
+        panel_bg, panel_border = self._panel_style()
+        font_color = self.theme["font_color"]
+
+        def _display(rel_type: str) -> str:
+            return rel_type.replace('_', ' ').title()
+
+        rows = "".join(
+            '<label style="display:flex;align-items:center;gap:6px;margin:2px 0;'
+            'cursor:pointer;white-space:nowrap;">'
+            f'<input type="checkbox" class="nodus-edge-filter" checked '
+            f'value="{json.dumps(rt)[1:-1]}" '
+            'onchange="nodusApplyEdgeFilter()" style="margin:0;cursor:pointer;">'
+            f'<span style="width:10px;height:10px;border-radius:50%;flex-shrink:0;'
+            f'background:{self._get_color_for_relationship_type(rt)};display:inline-block;"></span>'
+            f'<span>{_display(rt)}</span></label>'
+            for rt in rel_types
+        )
+
+        header = (
+            '<div style="display:flex;justify-content:space-between;'
+            'align-items:center;gap:12px;margin-bottom:6px;font-weight:bold;">'
+            '<span>Relationships</span>'
+            '<span style="font-weight:normal;">'
+            '<a href="#" onclick="nodusSetAllEdgeFilters(true);return false;" '
+            f'style="color:{font_color};text-decoration:underline;">All</a>'
+            ' / '
+            '<a href="#" onclick="nodusSetAllEdgeFilters(false);return false;" '
+            f'style="color:{font_color};text-decoration:underline;">None</a>'
+            '</span></div>'
+        )
+
+        panel = (
+            f'<div id="nodus-edge-filter" style="position:fixed;bottom:12px;left:12px;'
+            f'z-index:10;background:{panel_bg};border:1px solid {panel_border};'
+            f'border-radius:8px;padding:8px 12px;font-family:sans-serif;font-size:12px;'
+            f'color:{font_color};max-height:40vh;overflow-y:auto;">'
+            f'{header}{rows}</div>'
+        )
+
+        script = (
+            '<script type="text/javascript">\n'
+            'function nodusApplyEdgeFilter() {\n'
+            '    if (typeof edges === "undefined") return;\n'
+            '    var boxes = document.querySelectorAll(".nodus-edge-filter");\n'
+            '    var visible = {};\n'
+            '    boxes.forEach(function(b) { visible[b.value] = b.checked; });\n'
+            '    var updates = [];\n'
+            '    edges.forEach(function(e) {\n'
+            '        var show = visible[e.rel_type] !== false;\n'
+            '        updates.push({ id: e.id, hidden: !show });\n'
+            '    });\n'
+            '    if (updates.length) edges.update(updates);\n'
+            '}\n'
+            'function nodusSetAllEdgeFilters(checked) {\n'
+            '    document.querySelectorAll(".nodus-edge-filter").forEach(function(b) {\n'
+            '        b.checked = checked;\n'
+            '    });\n'
+            '    nodusApplyEdgeFilter();\n'
+            '}\n'
+            '</script>'
+        )
+        return panel + script
 
     def generate_html(
         self,
@@ -388,8 +507,10 @@ class GraphVisualizer:
             f'border:1px solid {panel_border};border-radius:8px;padding:6px 12px;'
             f'font-family:sans-serif;font-size:12px;cursor:pointer;">Export PNG</button>'
         )
+        edge_filter = self._edge_filter_html(self._rendered_relationship_types(graph))
         html_content = html_content.replace(
-            "</body>", self._legend_html(types_present) + export_button + "</body>"
+            "</body>",
+            self._legend_html(types_present) + export_button + edge_filter + "</body>"
         )
         logger.info("Generated HTML visualization in memory")
         return html_content

@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from nodus.models import KnowledgeGraph, Node, Relationship, NODE_TYPES
+from nodus.models import KnowledgeGraph, Node, Relationship, NODE_TYPES, sort_relationships
 
 
 class TestNode:
@@ -176,3 +176,67 @@ class TestKnowledgeGraphSchema:
     def test_unknown_node_type_still_coerces_to_other(self):
         node = Node(id="alice", type="astronaut_dog")
         assert node.type == "other"
+
+
+class TestSortRelationships:
+    def _rel(self, rid, rtype, source, target):
+        return Relationship(
+            id=rid, type=rtype, source_node_id=source, target_node_id=target
+        )
+
+    def test_groups_same_type_together_alphabetically(self):
+        rels = [
+            self._rel("r1", "WORKS_AT", "carol", "acme"),
+            self._rel("r2", "LIVES_IN", "alice", "sf"),
+            self._rel("r3", "WORKS_AT", "alice", "acme"),
+            self._rel("r4", "LIVES_IN", "bob", "nyc"),
+        ]
+        result = sort_relationships(rels)
+        keys = [(r.type, r.source_node_id) for r in result]
+        assert keys == [
+            ("LIVES_IN", "alice"),
+            ("LIVES_IN", "bob"),
+            ("WORKS_AT", "alice"),
+            ("WORKS_AT", "carol"),
+        ]
+
+    def test_sort_is_case_insensitive(self):
+        rels = [
+            self._rel("r1", "works_at", "Bob", "acme"),
+            self._rel("r2", "WORKS_AT", "alice", "acme"),
+        ]
+        result = sort_relationships(rels)
+        # "alice" precedes "Bob" case-insensitively despite differing type case.
+        assert [r.source_node_id for r in result] == ["alice", "Bob"]
+
+    def test_sort_by_target_when_type_and_source_equal(self):
+        rels = [
+            self._rel("r1", "KNOWS", "alice", "zoe"),
+            self._rel("r2", "KNOWS", "alice", "bob"),
+        ]
+        result = sort_relationships(rels)
+        assert [r.target_node_id for r in result] == ["bob", "zoe"]
+
+    def test_stable_for_equal_keys(self):
+        # Same key -> original relative order preserved (verified via ids).
+        r_first = self._rel("first", "KNOWS", "alice", "bob")
+        r_second = self._rel("second", "KNOWS", "alice", "bob")
+        result = sort_relationships([r_first, r_second])
+        assert [r.id for r in result] == ["first", "second"]
+
+    def test_input_not_mutated(self):
+        rels = [
+            self._rel("r1", "WORKS_AT", "carol", "acme"),
+            self._rel("r2", "LIVES_IN", "alice", "sf"),
+        ]
+        original_ids = [r.id for r in rels]
+        sort_relationships(rels)
+        assert [r.id for r in rels] == original_ids
+
+    def test_returns_new_list(self):
+        rels = [self._rel("r1", "WORKS_AT", "alice", "acme")]
+        result = sort_relationships(rels)
+        assert result is not rels
+
+    def test_empty_list(self):
+        assert sort_relationships([]) == []

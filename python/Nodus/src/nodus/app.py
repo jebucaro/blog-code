@@ -3,6 +3,7 @@ import logging
 import streamlit as st
 
 from nodus.extractor import GeminiExtractor
+from nodus.models import sort_relationships
 from nodus.repair import repair_graph
 from nodus.settings import Settings, AVAILABLE_MODELS, DEFAULT_MODEL, MAX_INPUT_LENGTH
 from nodus.visualizer import GraphVisualizer
@@ -320,7 +321,7 @@ class StreamlitApp:
 
         try:
             try:
-                theme = "dark" if st.context.theme.base == "dark" else "light"
+                theme = "dark" if st.context.theme.type == "dark" else "light"
             except (AttributeError, KeyError):
                 theme = st.session_state['settings'].viz_theme
             visualizer = GraphVisualizer(st.session_state['settings'], theme=theme)
@@ -350,10 +351,23 @@ class StreamlitApp:
         if st.session_state.knowledge_graph:
             import json
 
-            json_data = json.dumps(
-                st.session_state.knowledge_graph.model_dump(),
-                indent=2
+            kg = st.session_state.knowledge_graph
+
+            # Presentation-only sorting: group relationships by type, then
+            # source, then target (case-insensitive), and order nodes by
+            # (type, id) for consistent scanning. session_state is untouched.
+            sorted_rels = sort_relationships(kg.relationships)
+            sorted_nodes = sorted(
+                kg.nodes, key=lambda node: (node.type.lower(), node.id.lower())
             )
+
+            # Build a sorted copy of the dump so the export/JSON view match
+            # the tables, without mutating the stored graph.
+            sorted_dump = kg.model_dump()
+            sorted_dump["nodes"] = [node.model_dump() for node in sorted_nodes]
+            sorted_dump["relationships"] = [rel.model_dump() for rel in sorted_rels]
+
+            json_data = json.dumps(sorted_dump, indent=2)
             st.download_button(
                 label=":material/download: Download data (JSON)",
                 data=json_data,
@@ -369,7 +383,7 @@ class StreamlitApp:
                     "Label": node.label,
                     "Type": node.type
                 }
-                for node in st.session_state.knowledge_graph.nodes
+                for node in sorted_nodes
             ]
             st.dataframe(nodes_data, width='stretch')
 
@@ -380,12 +394,12 @@ class StreamlitApp:
                     "Type": rel.type,
                     "Target": rel.target_node_id
                 }
-                for rel in st.session_state.knowledge_graph.relationships
+                for rel in sorted_rels
             ]
             st.dataframe(rels_data, width='stretch')
 
             with st.expander("View full JSON", icon=":material/data_object:"):
-                st.json(st.session_state.knowledge_graph.model_dump())
+                st.json(sorted_dump)
         else:
             st.info("No data to display")
 

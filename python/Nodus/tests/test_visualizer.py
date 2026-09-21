@@ -40,6 +40,36 @@ class TestColorMap:
         assert viz._get_color_for_node_type("person") == NODE_TYPE_COLORS["dark"]["person"]
 
 
+class TestNodeLabelContrast:
+    """Pyvis's default node shape ('dot') draws the label outside/below the
+    node, against the canvas background - not inside the node's own colored
+    fill. So label color must track the theme's background/font_color pair,
+    not each node's individual fill color.
+    """
+
+    def test_node_label_color_matches_theme_font_color(self):
+        for theme, expected in (("dark", "white"), ("light", "black")):
+            viz = make_visualizer(theme)
+            html = viz.generate_html(make_graph())
+            assert f'"color": "{expected}"' in html
+
+    def test_node_label_keeps_explicit_font_size(self):
+        # Regression guard: pyvis's Network(font_color=...) used to force every
+        # node's font dict to {"color": ...}, silently dropping this size.
+        html = make_visualizer().generate_html(make_graph())
+        assert '"size": 14' in html
+
+    def test_node_label_has_translucent_theme_matched_background(self):
+        # A small background behind the label keeps it legible when an edge
+        # passes underneath, without fully hiding the edge (translucent).
+        for theme, expected in (
+            ("dark", "rgba(34, 34, 34, 0.75)"),
+            ("light", "rgba(255, 255, 255, 0.75)"),
+        ):
+            html = make_visualizer(theme).generate_html(make_graph())
+            assert f'"background": "{expected}"' in html
+
+
 class TestLegend:
     def test_legend_lists_present_types_only(self):
         html = make_visualizer().generate_html(make_graph())
@@ -80,6 +110,148 @@ class TestIsolatedNodes:
         viz.show_isolated = True
         html = viz.generate_html(make_graph())
         assert "loner" in html
+
+
+class TestEdgeTypes:
+    def _graph(self):
+        nodes = [
+            Node(id="alice", type="person"),
+            Node(id="acme", type="organization"),
+            Node(id="sf", type="location"),
+        ]
+        rels = [
+            Relationship(id="r1", type="WORKS_AT",
+                         source_node_id="alice", target_node_id="acme"),
+            Relationship(id="r2", type="LIVES_IN",
+                         source_node_id="alice", target_node_id="sf"),
+        ]
+        return KnowledgeGraph(nodes=nodes, relationships=rels)
+
+    def test_each_edge_carries_rel_type(self):
+        html = make_visualizer().generate_html(self._graph())
+        assert '"rel_type": "WORKS_AT"' in html
+        assert '"rel_type": "LIVES_IN"' in html
+
+    def test_self_loops_and_dangling_edges_excluded(self):
+        nodes = [Node(id="alice", type="person"), Node(id="acme", type="organization")]
+        rels = [
+            Relationship(id="r1", type="WORKS_AT",
+                         source_node_id="alice", target_node_id="acme"),
+            # self-loop: must be excluded
+            Relationship(id="r2", type="KNOWS",
+                         source_node_id="alice", target_node_id="alice"),
+            # dangling target: must be excluded
+            Relationship(id="r3", type="OWNS",
+                         source_node_id="alice", target_node_id="ghost"),
+        ]
+        g = KnowledgeGraph(nodes=nodes, relationships=rels)
+        html = make_visualizer().generate_html(g)
+        assert '"rel_type": "WORKS_AT"' in html
+        assert '"rel_type": "KNOWS"' not in html
+        assert '"rel_type": "OWNS"' not in html
+
+
+class TestEdgeColors:
+    def _graph(self):
+        nodes = [
+            Node(id="alice", type="person"),
+            Node(id="acme", type="organization"),
+            Node(id="sf", type="location"),
+        ]
+        rels = [
+            Relationship(id="r1", type="WORKS_AT",
+                         source_node_id="alice", target_node_id="acme"),
+            Relationship(id="r2", type="LIVES_IN",
+                         source_node_id="alice", target_node_id="sf"),
+        ]
+        return KnowledgeGraph(nodes=nodes, relationships=rels)
+
+    def test_color_is_stable_for_the_same_type(self):
+        viz = make_visualizer()
+        assert (viz._get_color_for_relationship_type("WORKS_AT")
+                == viz._get_color_for_relationship_type("WORKS_AT"))
+
+    def test_different_types_get_different_colors(self):
+        viz = make_visualizer()
+        assert (viz._get_color_for_relationship_type("WORKS_AT")
+                != viz._get_color_for_relationship_type("LIVES_IN"))
+
+    def test_color_is_an_hsl_string(self):
+        viz = make_visualizer()
+        assert viz._get_color_for_relationship_type("WORKS_AT").startswith("hsl(")
+
+    def test_edges_carry_their_type_color_in_html(self):
+        viz = make_visualizer()
+        html = viz.generate_html(self._graph())
+        works_at_color = viz._get_color_for_relationship_type("WORKS_AT")
+        lives_in_color = viz._get_color_for_relationship_type("LIVES_IN")
+        assert f'"color": "{works_at_color}"' in html
+        assert f'"color": "{lives_in_color}"' in html
+
+    def test_filter_panel_swatch_matches_edge_color(self):
+        viz = make_visualizer()
+        html = viz.generate_html(self._graph())
+        works_at_color = viz._get_color_for_relationship_type("WORKS_AT")
+        assert f"background:{works_at_color};" in html
+
+
+class TestEdgeFilter:
+    def _graph(self):
+        nodes = [
+            Node(id="alice", type="person"),
+            Node(id="acme", type="organization"),
+            Node(id="sf", type="location"),
+        ]
+        rels = [
+            Relationship(id="r1", type="WORKS_AT",
+                         source_node_id="alice", target_node_id="acme"),
+            Relationship(id="r2", type="LIVES_IN",
+                         source_node_id="alice", target_node_id="sf"),
+        ]
+        return KnowledgeGraph(nodes=nodes, relationships=rels)
+
+    def test_filter_panel_present_with_checkbox_per_type(self):
+        html = make_visualizer().generate_html(self._graph())
+        assert 'id="nodus-edge-filter"' in html
+        assert 'value="WORKS_AT"' in html
+        assert 'value="LIVES_IN"' in html
+        # Human-readable label rendered next to the checkbox.
+        assert ">Works At<" in html
+        assert ">Lives In<" in html
+
+    def test_filter_toggles_hidden_via_edges_dataset(self):
+        html = make_visualizer().generate_html(self._graph())
+        assert "function nodusApplyEdgeFilter" in html
+        assert "function nodusSetAllEdgeFilters" in html
+        # Must toggle via the DataSet update (preserves layout), not removal.
+        assert "edges.update(updates)" in html
+        assert "hidden: !show" in html
+
+    def test_all_checkboxes_checked_by_default(self):
+        html = make_visualizer().generate_html(self._graph())
+        # Every filter checkbox starts checked so all edges show initially.
+        assert html.count('class="nodus-edge-filter" checked') == 2
+
+    def test_no_filter_panel_for_empty_graph(self):
+        html = make_visualizer().generate_html(KnowledgeGraph())
+        assert 'id="nodus-edge-filter"' not in html
+
+    def test_filter_only_lists_rendered_edge_types(self):
+        # Self-loop and dangling edges must not appear as filter options.
+        nodes = [Node(id="alice", type="person"), Node(id="acme", type="organization")]
+        rels = [
+            Relationship(id="r1", type="WORKS_AT",
+                         source_node_id="alice", target_node_id="acme"),
+            Relationship(id="r2", type="KNOWS",
+                         source_node_id="alice", target_node_id="alice"),
+            Relationship(id="r3", type="OWNS",
+                         source_node_id="alice", target_node_id="ghost"),
+        ]
+        g = KnowledgeGraph(nodes=nodes, relationships=rels)
+        html = make_visualizer().generate_html(g)
+        assert 'value="WORKS_AT"' in html
+        assert 'value="KNOWS"' not in html
+        assert 'value="OWNS"' not in html
 
 
 class TestPngExport:

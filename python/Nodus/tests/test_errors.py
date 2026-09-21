@@ -10,6 +10,7 @@ from nodus.errors import (
     TokenLimitError,
     UnknownAPIError,
     default_user_messages,
+    map_api_error,
 )
 
 
@@ -109,3 +110,25 @@ class TestDefaultUserMessages:
     def test_rate_limited_message_mentions_wait(self):
         messages = default_user_messages()
         assert "wait" in messages["rate_limited"].lower()
+
+
+class TestMapApiError:
+    def test_unavailable_maps_to_api_unavailable_error(self):
+        err = map_api_error(Exception("503 Service Unavailable"), default_user_messages())
+        assert isinstance(err, APIUnavailableError)
+
+    def test_rate_limit_maps_to_rate_limit_error(self):
+        err = map_api_error(Exception("429 quota exceeded"), default_user_messages())
+        assert isinstance(err, RateLimitError)
+
+    def test_timeout_maps_to_network_error(self):
+        err = map_api_error(Exception("Connection timed out"), default_user_messages())
+        assert isinstance(err, NetworkError)
+
+    def test_unrecognized_error_maps_to_unknown_api_error(self):
+        err = map_api_error(Exception("something weird happened"), default_user_messages())
+        assert isinstance(err, UnknownAPIError)
+
+    def test_detail_preserves_original_message(self):
+        err = map_api_error(Exception("429 quota exceeded"), default_user_messages())
+        assert err.detail == "429 quota exceeded"

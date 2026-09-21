@@ -2,6 +2,7 @@ import logging
 
 import streamlit as st
 
+from nodus.chat import GraphChatSession
 from nodus.extractor import GeminiExtractor
 from nodus.models import sort_relationships
 from nodus.repair import repair_graph
@@ -50,6 +51,10 @@ class StreamlitApp:
             st.session_state['file_uploader_key'] = 0
         if 'use_summary_for_kg' not in st.session_state:
             st.session_state['use_summary_for_kg'] = True
+        if 'chat_session' not in st.session_state:
+            st.session_state['chat_session'] = None
+        if 'chat_messages' not in st.session_state:
+            st.session_state['chat_messages'] = []
 
     def render_sidebar(self) -> None:
         """Render sidebar with settings"""
@@ -192,6 +197,12 @@ class StreamlitApp:
                 extractor.close()
                 st.session_state['extractor'] = None
 
+        # Reset chat state up front, before any extraction attempt, so a chat
+        # session built on a since-closed extractor's client never survives a
+        # failed re-extraction (extractor.close() above may have already run).
+        st.session_state['chat_session'] = None
+        st.session_state['chat_messages'] = []
+
         try:
             with st.status(":material/auto_awesome: Extracting knowledge graph...", expanded=True) as status:
                 def progress(msg: str) -> None:
@@ -258,6 +269,18 @@ class StreamlitApp:
 
         with tab_stats:
             self.display_statistics()
+
+        # Chat lives outside st.tabs() rather than as a 5th tab: st.chat_input
+        # nested inside st.tabs() hits a known Streamlit bug where a rerun it
+        # triggers can reset the tab selection back to whichever tab was active
+        # during the last server-side rerun (streamlit/streamlit#13341). A
+        # bordered container keeps the chat input "inline" (per st.chat_input's
+        # own docs) instead of pinning to the bottom of the whole page, which is
+        # what happens when it's called from the unwrapped main body.
+        st.divider()
+        st.subheader(":material/chat: Chat")
+        with st.container(border=True):
+            self.display_chat()
 
     def display_summary(self) -> None:
         """Display the executive summary, if available."""
@@ -437,6 +460,65 @@ class StreamlitApp:
         else:
             st.info("No statistics to display")
 
+    def display_chat(self) -> None:
+        """Chat interface for asking questions about the extracted knowledge graph."""
+        knowledge_graph = st.session_state.get('knowledge_graph')
+        if not knowledge_graph:
+            st.info(":information_source: Extract a knowledge graph first to chat about it.")
+            return
+
+        for message in st.session_state['chat_messages']:
+            with st.chat_message(message["role"]):
+                st.write(message["content"])
+
+        question = st.chat_input("Ask a question about the extracted graph...")
+        if not question:
+            return
+
+        with st.chat_message("user"):
+            st.write(question)
+
+        try:
+            session = st.session_state['chat_session']
+            is_first_question = session is None
+            if is_first_question:
+                extractor = st.session_state['extractor']
+                session = GraphChatSession(
+                    client=extractor.client,
+                    model=st.session_state['settings'].gemini_model,
+                )
+
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    answer = (
+                        session.ask(question, graph=knowledge_graph)
+                        if is_first_question
+                        else session.ask(question)
+                    )
+                st.write(answer)
+            # Only persist the session once its first ask() has succeeded; storing it
+            # earlier would leave chat_session set but _previous_interaction_id unset
+            # if ask() raised, wrongly routing the next question down the follow-up
+            # (no graph) path and causing a stuck ValueError loop.
+            if is_first_question:
+                st.session_state['chat_session'] = session
+            # Append both messages together, only after ask() succeeds, so a failed
+            # question never leaves an orphaned user turn with no reply underneath it.
+            st.session_state['chat_messages'].append({"role": "user", "content": question})
+            st.session_state['chat_messages'].append({"role": "assistant", "content": answer})
+            # Without this, the exchange just rendered above (in script order,
+            # after the history loop) stays visually stuck below chat_input until
+            # some other interaction reruns the script - rerunning immediately
+            # makes the history loop redraw everything, including this exchange,
+            # in the correct order on top.
+            st.rerun()
+        except ExtractionError as e:
+            st.error(f":x: {e.user_message}")
+            logger.error(f"ExtractionError during chat: {e}")
+        except Exception as e:
+            st.error(":x: An unexpected error occurred while answering the question.")
+            logger.exception(f"Unexpected error during chat: {e}")
+
     def clear_callback(self):
         """Callback function to clear all state when Clear button is clicked."""
         if st.session_state.extractor:
@@ -448,6 +530,8 @@ class StreamlitApp:
         st.session_state.knowledge_graph = None
         st.session_state.repair_report = None
         st.session_state.executive_summary = None
+        st.session_state.chat_session = None
+        st.session_state.chat_messages = []
         st.session_state.extractor = None
         st.session_state.input_text = ''
         st.session_state.file_uploader_key += 1

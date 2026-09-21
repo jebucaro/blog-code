@@ -141,7 +141,8 @@ Nodus/
 ### 4. Web Interface (`app.py`)
 - Streamlit-based UI with session state management
 - File upload support for text files
-- Three-tab results view (Visualization, Raw Data, Statistics)
+- Five-tab results view (Summary, Visualization, Raw Data, Statistics, Chat)
+- Chat tab: ask natural-language questions answered only from the extracted graph
 - Export functionality (HTML, JSON)
 
 ## Configuration
@@ -169,6 +170,18 @@ the adjustable `safety_settings` (harassment, hate speech, sexually explicit,
 dangerous content). Only Gemini's always-on core protections (e.g. child
 safety) apply; the adjustable filters default to **Off**. Keep this in mind if
 you're feeding it untrusted or user-submitted text.
+
+### Chat Data Retention
+
+Knowledge graph extraction calls use `store=False` (see `extractor.py`) so
+Gemini doesn't retain your document text or extracted graph server-side.
+The Chat tab is a deliberate exception: it uses `store=True` so Gemini can
+keep the graph in a server-side conversation thread across follow-up
+questions instead of resending it every turn. This means chat conversations
+are retained by Gemini for the standard Interactions API retention window
+(55 days on the paid tier, 1 day on the free tier). Extraction and chat are
+otherwise independent - the retention tradeoff only applies while you're
+actively using the Chat tab.
 
 ## Development
 

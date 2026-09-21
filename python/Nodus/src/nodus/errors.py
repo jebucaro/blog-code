@@ -69,3 +69,16 @@ def default_user_messages() -> dict[str, str]:
         "unknown": "An unexpected error occurred while contacting Gemini.",
     }
 
+
+def map_api_error(e: Exception, messages: dict[str, str]) -> ExtractionError:
+    """Map raw SDK/network exceptions onto user-meaningful error types."""
+    detail = str(e)
+    lowered = detail.lower()
+    if any(code in lowered for code in ("unavailable", "503", "502")):
+        return APIUnavailableError(user_message=messages["api_unavailable"], detail=detail)
+    if any(term in lowered for term in ("rate limit", "quota", "429")):
+        return RateLimitError(user_message=messages["rate_limited"], detail=detail)
+    if any(term in lowered for term in ("timeout", "timed out", "connection", "network")):
+        return NetworkError(user_message=messages["network"], detail=detail)
+    return UnknownAPIError(user_message=messages["unknown"], detail=detail)
+

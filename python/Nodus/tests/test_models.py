@@ -1,7 +1,14 @@
 import pytest
 from pydantic import ValidationError
 
-from nodus.models import NODE_TYPES, KnowledgeGraph, Node, Relationship, sort_relationships
+from nodus.models import (
+    NODE_TYPES,
+    KnowledgeGraph,
+    Node,
+    Relationship,
+    extraction_json_schema,
+    sort_relationships,
+)
 
 
 class TestNode:
@@ -63,6 +70,31 @@ class TestNode:
         node = Node(id="hello_world", type="concept", label="")
         assert node.label == "Hello World"
 
+    def test_context_defaults_to_none(self):
+        node = Node(id="alice", type="person")
+        assert node.context is None
+
+    def test_context_stored_when_provided(self):
+        node = Node(id="alice", type="person", context="Joined the company in 2019.")
+        assert node.context == "Joined the company in 2019."
+
+    def test_context_whitespace_stripped(self):
+        node = Node(id="alice", type="person", context="  A detail.  ")
+        assert node.context == "A detail."
+
+    def test_context_empty_string_normalizes_to_none(self):
+        node = Node(id="alice", type="person", context="")
+        assert node.context is None
+
+    def test_context_whitespace_only_normalizes_to_none(self):
+        node = Node(id="alice", type="person", context="   ")
+        assert node.context is None
+
+    def test_context_over_200_chars_is_truncated_with_ellipsis(self):
+        node = Node(id="alice", type="person", context="x" * 250)
+        assert node.context == "x" * 200 + "…"
+        assert len(node.context) == 201
+
 
 class TestRelationship:
     def test_valid_relationship(self):
@@ -107,6 +139,27 @@ class TestRelationship:
         assert rel.id == "r1"
         assert rel.source_node_id == "alice"
         assert rel.target_node_id == "acme"
+
+    def test_context_defaults_to_none(self):
+        rel = Relationship(id="r1", type="works_at", source_node_id="a", target_node_id="b")
+        assert rel.context is None
+
+    def test_context_stored_when_provided(self):
+        rel = Relationship(
+            id="r1", type="works_at", source_node_id="a", target_node_id="b",
+            context="Since 2019, as VP of Engineering.",
+        )
+        assert rel.context == "Since 2019, as VP of Engineering."
+
+    def test_context_empty_string_normalizes_to_none(self):
+        rel = Relationship(id="r1", type="works_at", source_node_id="a", target_node_id="b", context="")
+        assert rel.context is None
+
+    def test_context_over_200_chars_is_truncated_with_ellipsis(self):
+        rel = Relationship(
+            id="r1", type="works_at", source_node_id="a", target_node_id="b", context="y" * 250,
+        )
+        assert rel.context == "y" * 200 + "…"
 
 
 class TestKnowledgeGraph:
@@ -176,6 +229,52 @@ class TestKnowledgeGraphSchema:
     def test_unknown_node_type_still_coerces_to_other(self):
         node = Node(id="alice", type="astronaut_dog")
         assert node.type == "other"
+
+
+class TestExtractionJsonSchema:
+    """The schema sent to Gemini requires `context`; the Python models don't."""
+
+    def test_context_is_required_for_nodes_and_relationships(self):
+        defs = extraction_json_schema()["$defs"]
+        assert "context" in defs["Node"]["required"]
+        assert "context" in defs["Relationship"]["required"]
+
+    def test_existing_required_fields_are_preserved(self):
+        defs = extraction_json_schema()["$defs"]
+        assert {"id", "type"} <= set(defs["Node"]["required"])
+        assert {"id", "type", "source_node_id", "target_node_id"} <= set(
+            defs["Relationship"]["required"]
+        )
+
+    def test_context_is_a_plain_string_not_nullable(self):
+        defs = extraction_json_schema()["$defs"]
+        for name in ("Node", "Relationship"):
+            prop = defs[name]["properties"]["context"]
+            assert prop["type"] == "string"
+            assert "anyOf" not in prop
+            assert "default" not in prop
+
+    def test_context_description_says_to_use_an_empty_string(self):
+        defs = extraction_json_schema()["$defs"]
+        assert "empty string" in defs["Node"]["properties"]["context"]["description"]
+        assert "empty string" in defs["Relationship"]["properties"]["context"]["description"]
+
+    def test_model_schema_itself_is_unchanged_and_context_stays_optional(self):
+        defs = KnowledgeGraph.model_json_schema()["$defs"]
+        assert "context" not in defs["Node"]["required"]
+        assert "context" not in defs["Relationship"]["required"]
+
+    def test_repeated_calls_do_not_mutate_shared_state(self):
+        extraction_json_schema()
+        assert "context" not in KnowledgeGraph.model_json_schema()["$defs"]["Node"]["required"]
+
+    def test_empty_string_context_from_the_model_parses_to_none(self):
+        payload = (
+            '{"nodes": [{"id": "alice", "label": "Alice", "type": "person", "context": ""}],'
+            ' "relationships": []}'
+        )
+        graph = KnowledgeGraph.model_validate_json(payload)
+        assert graph.nodes[0].context is None
 
 
 class TestSortRelationships:

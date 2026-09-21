@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -13,6 +14,27 @@ RELATIONSHIP_TYPE_EXAMPLES: list[str] = [
     "LOCATED_IN", "PART_OF", "AFFILIATED_WITH", "ACQUIRED", "INVESTED_IN",
     "REPORTED_TO", "COMPETED_WITH", "CAUSED", "PRECEDED", "FOLLOWED", "RELATED_TO",
 ]
+
+CONTEXT_MAX_LENGTH = 200
+
+
+def _normalize_context(v: str | None) -> str | None:
+    """Shared context-field normalization for Node and Relationship.
+
+    Empty/whitespace-only input becomes None (so callers can rely on a single
+    "no context" sentinel). Content over the length cap is soft-truncated
+    with an ellipsis rather than rejected - context is supplementary, so a
+    verbose LLM response shouldn't fail the whole extraction the way a bad
+    id/type would.
+    """
+    if v is None:
+        return v
+    stripped = v.strip()
+    if not stripped:
+        return None
+    if len(stripped) > CONTEXT_MAX_LENGTH:
+        stripped = stripped[:CONTEXT_MAX_LENGTH].rstrip() + "…"
+    return stripped
 
 
 class Node(BaseModel):
@@ -38,6 +60,14 @@ class Node(BaseModel):
         ),
         json_schema_extra={"enum": NODE_TYPES},
     )
+    context: str | None = Field(
+        default=None,
+        description=(
+            "A short (one sentence, under 200 characters) supporting detail from the text "
+            "that isn't captured by label/type alone - e.g. a date, number, quote fragment, "
+            "or key nuance. Use an empty string when there's nothing beyond the bare fact."
+        )
+    )
 
     @field_validator('id')
     @classmethod
@@ -51,6 +81,12 @@ class Node(BaseModel):
             raise ValueError(f"Node ID '{stripped}' is too long (max 200 characters)")
 
         return stripped
+
+    @field_validator('context')
+    @classmethod
+    def validate_context(cls, v: str | None) -> str | None:
+        """Normalize context: empty/whitespace-only becomes None, long values are truncated."""
+        return _normalize_context(v)
 
     @field_validator('label', 'type')
     @classmethod
@@ -97,6 +133,20 @@ class Relationship(BaseModel):
     )
     source_node_id: str = Field(description="ID of the source node")
     target_node_id: str = Field(description="ID of the target node")
+    context: str | None = Field(
+        default=None,
+        description=(
+            "A short (one sentence, under 200 characters) supporting detail about this "
+            "specific relationship - e.g. 'since 2019, as VP of Engineering' - when the text "
+            "provides one. Use an empty string when there's nothing beyond the bare relationship fact."
+        )
+    )
+
+    @field_validator('context')
+    @classmethod
+    def validate_context(cls, v: str | None) -> str | None:
+        """Normalize context: empty/whitespace-only becomes None, long values are truncated."""
+        return _normalize_context(v)
 
     @field_validator('type')
     @classmethod
@@ -161,6 +211,28 @@ class KnowledgeGraph(BaseModel):
 
         self.relationships = unique_relationships
         return self
+
+
+def extraction_json_schema() -> dict[str, Any]:
+    """KnowledgeGraph JSON schema for Gemini's structured output, with `context` required.
+
+    The Python models keep `context` optional (repair placeholders and callers
+    build nodes without it), but models tend to skip optional nullable fields
+    in structured output. The schema sent to Gemini therefore requires a plain
+    string per node/relationship, forcing a decision each time; an empty
+    string normalizes back to None on parsing.
+    """
+    schema = KnowledgeGraph.model_json_schema()
+    for name in ("Node", "Relationship"):
+        definition = schema["$defs"][name]
+        original = definition["properties"]["context"]
+        definition["properties"]["context"] = {
+            "type": "string",
+            "title": original.get("title", "Context"),
+            "description": original["description"],
+        }
+        definition["required"] = [*definition.get("required", []), "context"]
+    return schema
 
 
 def sort_relationships(relationships: list["Relationship"]) -> list["Relationship"]:

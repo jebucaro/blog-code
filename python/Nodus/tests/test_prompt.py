@@ -26,3 +26,18 @@ class TestSystemPrompt:
         assert "3b." not in SYSTEM_PROMPT
         assert "4b." not in SYSTEM_PROMPT
         assert "5b." not in SYSTEM_PROMPT
+
+    def test_context_field_guidance_present_for_nodes_and_relationships(self):
+        assert SYSTEM_PROMPT.count("`context` (Supporting Detail - always present, may be empty)") == 2
+        assert "Never restate the `label` or `type`" in SYSTEM_PROMPT
+
+    def test_context_guidance_actively_asks_for_detail_not_just_permits_it(self):
+        assert "Most entities in a text with real detail" in SYSTEM_PROMPT
+        assert "Most relationships in a text with real detail" in SYSTEM_PROMPT
+
+    def test_context_guidance_says_use_an_empty_string_when_nothing_to_add(self):
+        assert SYSTEM_PROMPT.count("Use an empty string only when") >= 2
+
+    def test_final_self_check_covers_context(self):
+        self_check = SYSTEM_PROMPT.split("Final Self-Check")[1]
+        assert "`context`" in self_check

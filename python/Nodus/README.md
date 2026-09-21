@@ -75,17 +75,29 @@ This will:
    - `gemini-3.1-pro-preview` - Most capable, deepest reasoning
 3. **Pick a Thinking Level** (optional): "Model default" uses each model's built-in
    thinking level; Low/Medium/High trade speed for extraction quality.
+   The sidebar's "Use executive summary to build knowledge graph" checkbox is **off**
+   by default: the graph is built from your full text, which keeps the dates, numbers,
+   and reasons that fill each node's and relationship's `context`. Turn it on for a
+   higher-level graph built from the summary (most fine detail is lost that way).
 4. **Input Text**: Either:
    - Upload a text file (`.txt`, `.md`) using the file uploader
    - Paste text directly into the text area
 5. **Extract**: Click "Extract" to generate the knowledge graph
-6. **View Results**: Explore three tabs:
-   - **Visualization**: Interactive graph (drag, zoom, hover for details). Use the
+6. **View Results**: Explore four tabs:
+   - **Summary**: Document summary
+   - **Graph**: Interactive graph (drag, zoom, hover for details). Use the
      relationship-type filter (bottom-left) to show or hide edges by type, with
      "All"/"None" shortcuts. Filtering hides edges without disturbing the layout.
-   - **Raw Data**: Tables of nodes and relationships (grouped and sorted by
+   - **Raw data**: Tables of nodes and relationships (grouped and sorted by
      relationship type, then source, then target), plus full JSON in the same order
    - **Statistics**: Counts and distributions
+
+   Below the tabs, the **Chat** section lets you ask questions about the document;
+   answers come from the original source text. Each answer ends with an **Evidence**
+   section: verbatim quotes from the document, and any fact taken from the
+   relationship list listed separately, so you can see where each claim came from. The quotes are
+   written by the model and can occasionally be inexact, so check anything important
+   against the source.
 7. **Export**: Download HTML visualization or JSON data
 8. **Clear**: Reset everything and start over
 
@@ -126,10 +138,14 @@ Nodus/
 - Returns validated `KnowledgeGraph` objects
 
 ### 2. Data Models (`models.py`)
-- **Node**: Entity with `id`, `label`, `type`
-- **Relationship**: Connection with `id`, `type`, `source_node_id`, `target_node_id`
+- **Node**: Entity with `id`, `label`, `type`, optional `context`
+- **Relationship**: Connection with `id`, `type`, `source_node_id`, `target_node_id`, optional `context`
 - **KnowledgeGraph**: Container with nodes and relationships
 - Auto-generates labels and deduplicates relationships
+- `context` holds a short (≤200 char) supporting detail - a date, number, quote fragment, or
+  key nuance from the source text - when the LLM finds one worth keeping beyond the bare
+  label/type/relationship fact. It's optional and often absent; shown in graph tooltips, the
+  Raw Data tables. It is not sent to Chat, which gets only the relationship list.
 
 ### 3. Visualization Layer (`visualizer.py`)
 - Creates interactive HTML visualizations using PyVis
@@ -141,8 +157,10 @@ Nodus/
 ### 4. Web Interface (`app.py`)
 - Streamlit-based UI with session state management
 - File upload support for text files
-- Five-tab results view (Summary, Visualization, Raw Data, Statistics, Chat)
-- Chat tab: ask natural-language questions answered only from the extracted graph
+- Four-tab results view (Summary, Visualization, Raw Data, Statistics), plus a Chat
+  section below the tabs
+- Chat: ask natural-language questions answered from the original source text, with
+  a compact list of the extracted relationships as a consistency aid for entity names
 - Export functionality (HTML, JSON)
 
 ## Configuration
@@ -175,13 +193,21 @@ you're feeding it untrusted or user-submitted text.
 
 Knowledge graph extraction calls use `store=False` (see `extractor.py`) so
 Gemini doesn't retain your document text or extracted graph server-side.
-The Chat tab is a deliberate exception: it uses `store=True` so Gemini can
-keep the graph in a server-side conversation thread across follow-up
-questions instead of resending it every turn. This means chat conversations
-are retained by Gemini for the standard Interactions API retention window
-(55 days on the paid tier, 1 day on the free tier). Extraction and chat are
-otherwise independent - the retention tradeoff only applies while you're
-actively using the Chat tab.
+Chat is a deliberate exception: it uses `store=True` so Gemini can
+keep the conversation in a server-side thread across follow-up questions
+instead of resending context every turn in the request (follow-up turns still
+replay the stored conversation server-side, so the document counts as input
+tokens on every turn even though it isn't re-sent). This means chat conversations are
+retained by Gemini for the standard Interactions API retention window (55
+days on the paid tier, 1 day on the free tier).
+
+Chat sends the **full original source text** (not just the extracted
+graph) on the first question of each session, so Gemini retains your raw
+document content for that retention window while you're using Chat - a bigger tradeoff than earlier versions of this app made, when chat
+sent only the structured graph. Extraction and chat are otherwise
+independent - the retention tradeoff only applies while you're actively
+using Chat, and starts fresh (a new server-side thread) every time
+you re-extract or click Clear.
 
 ## Development
 

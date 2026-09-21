@@ -151,6 +151,39 @@ class TestEdgeTypes:
         assert '"rel_type": "OWNS"' not in html
 
 
+class TestContextInTooltips:
+    def test_node_tooltip_includes_context_when_present(self):
+        nodes = [
+            Node(id="alice", type="person", context="Joined the company in 2019."),
+            Node(id="acme", type="organization"),
+        ]
+        rels = [Relationship(id="r1", type="WORKS_AT", source_node_id="alice", target_node_id="acme")]
+        g = KnowledgeGraph(nodes=nodes, relationships=rels)
+        html = make_visualizer().generate_html(g)
+        assert "Joined the company in 2019." in html
+
+    def test_node_tooltip_has_no_stray_context_line_when_absent(self):
+        html = make_visualizer().generate_html(make_graph())
+        # No context on any node in make_graph(); title fields end right after the ID line.
+        assert '"title": "Alice\\nType: person\\nID: alice"' in html
+
+    def test_edge_tooltip_includes_context_when_present(self):
+        nodes = [Node(id="alice", type="person"), Node(id="acme", type="organization")]
+        rels = [
+            Relationship(
+                id="r1", type="WORKS_AT", source_node_id="alice", target_node_id="acme",
+                context="Since 2019, as VP of Engineering.",
+            )
+        ]
+        g = KnowledgeGraph(nodes=nodes, relationships=rels)
+        html = make_visualizer().generate_html(g)
+        assert "Since 2019, as VP of Engineering." in html
+
+    def test_edge_tooltip_has_no_stray_context_line_when_absent(self):
+        html = make_visualizer().generate_html(make_graph())
+        assert '"title": "Alice \\u2192 Works At \\u2192 Acme"' in html
+
+
 class TestEdgeColors:
     def _graph(self):
         nodes = [

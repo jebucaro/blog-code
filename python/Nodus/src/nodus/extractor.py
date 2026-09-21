@@ -22,6 +22,7 @@ from nodus.models import (
     ExecutiveSummary,
     ExtractionResult,
     KnowledgeGraph,
+    extraction_json_schema,
 )
 from nodus.security import wrap_untrusted_content
 from nodus.settings import MAX_INPUT_LENGTH, Settings
@@ -75,6 +76,14 @@ extract information from the text's content, not the headings themselves.
 - **`type` (Controlled Category):**
     - The `type` MUST be one of these values: {node_types}
     - Use `"other"` only when none of the listed types fit.
+- **`context` (Supporting Detail - always present, may be empty):**
+    - Actively look for a short (one sentence, under 200 characters) supporting detail the text
+      gives about the entity that `label`/`type` alone don't capture: a role or title, date,
+      number, quantity, location, quote fragment, reason, or outcome.
+    - Most entities in a text with real detail (a transcript, article, or meeting notes) have
+      one. Fill `context` in whenever the text says something specific about the entity.
+    - Use an empty string only when the text says nothing about the entity beyond its name.
+      Never restate the `label` or `type` here - a restatement is worse than an empty string.
 - **Coreference Resolution:**
     - Resolve all pronouns (he, she, they, it) to their referent entity before creating nodes —
       never use pronouns as node IDs or labels.
@@ -93,6 +102,13 @@ extract information from the text's content, not the headings themselves.
       **underscores (_)** (e.g., 'WORKS_AS', 'DEPENDS_ON').
     - Prefer these relationship types when applicable: {rel_types}
     - Create new relationship types only when none of the above fit.
+- **`context` (Supporting Detail - always present, may be empty):**
+    - Actively look for a short (one sentence, under 200 characters) supporting detail about this
+      specific relationship: when it happened, how, why, how much, or with what result -
+      e.g. "since 2019, as VP of Engineering" or "by shipping a free tier for developers".
+    - Most relationships in a text with real detail have one. Fill `context` in whenever the
+      text says something specific about the relationship.
+    - Use an empty string only when the text states nothing beyond the bare relationship fact.
 
 ## 6. Final Self-Check (MANDATORY)
 Before returning your answer, verify each point and fix any violation:
@@ -101,6 +117,9 @@ Before returning your answer, verify each point and fix any violation:
 2. No two nodes refer to the same real-world entity.
 3. Every node participates in at least one relationship whenever the text supports one; do not
    invent relationships for genuinely isolated entities.
+4. Go back through every node and relationship: if the text states a specific detail about it
+   (role, date, number, reason, outcome), its `context` must be filled in. Use an empty string
+   only where the text truly has nothing beyond the bare fact.
 """.format(
     node_types=", ".join(NODE_TYPES),
     rel_types=", ".join(RELATIONSHIP_TYPE_EXAMPLES),
@@ -195,7 +214,7 @@ class GeminiExtractor:
             "response_format": {
                 "type": "text",
                 "mime_type": "application/json",
-                "schema": KnowledgeGraph.model_json_schema(),
+                "schema": extraction_json_schema(),
             },
             "store": False,
         }
@@ -313,7 +332,7 @@ class GeminiExtractor:
     def extract_with_summary(
         self,
         text: str,
-        use_summary_for_kg: bool = True,
+        use_summary_for_kg: bool = False,
         show_summary: bool = True,
         on_progress: Callable[[str], None] | None = None,
     ) -> ExtractionResult:

@@ -1,16 +1,40 @@
 import logging
+import uuid
 
 import streamlit as st
+from streamlit.errors import StreamlitInvalidLayoutContextError
 
-from nodus.chat import GraphChatSession
+from nodus.chat import DocumentChatSession
 from nodus.errors import ExtractionError
 from nodus.extractor import GeminiExtractor
-from nodus.models import sort_relationships
+from nodus.models import KnowledgeGraph, sort_relationships
 from nodus.repair import repair_graph
 from nodus.settings import AVAILABLE_MODELS, DEFAULT_MODEL, MAX_INPUT_LENGTH, Settings
 from nodus.visualizer import GraphVisualizer
 
 logger = logging.getLogger(__name__)
+
+
+@st.cache_data(show_spinner=False, max_entries=8, ttl=3600)
+def _build_graph_html(
+    _graph: KnowledgeGraph,
+    graph_key: str,
+    theme: str,
+    show_isolated: bool,
+    placeholder_ids: frozenset[str],
+) -> str:
+    """Render the graph visualization once per distinct input.
+
+    Streamlit reruns the whole script (every tab) on any interaction, so
+    without this the graph HTML was rebuilt on every chat message. The graph
+    is excluded from hashing (underscore prefix); `graph_key` identifies it instead.
+    """
+    visualizer = GraphVisualizer(theme=theme)
+    visualizer.show_isolated = show_isolated
+    return visualizer.generate_html(
+        _graph, placeholder_ids=placeholder_ids
+    )
+
 
 THINKING_LEVEL_OPTIONS = {
     "Model default": "default",
@@ -39,6 +63,8 @@ class StreamlitApp:
         """Initialize session state variables"""
         if 'knowledge_graph' not in st.session_state:
             st.session_state['knowledge_graph'] = None
+        if 'graph_version' not in st.session_state:
+            st.session_state['graph_version'] = None
         if 'repair_report' not in st.session_state:
             st.session_state['repair_report'] = None
         if 'executive_summary' not in st.session_state:
@@ -50,11 +76,13 @@ class StreamlitApp:
         if 'file_uploader_key' not in st.session_state:
             st.session_state['file_uploader_key'] = 0
         if 'use_summary_for_kg' not in st.session_state:
-            st.session_state['use_summary_for_kg'] = True
+            st.session_state['use_summary_for_kg'] = False
         if 'chat_session' not in st.session_state:
             st.session_state['chat_session'] = None
         if 'chat_messages' not in st.session_state:
             st.session_state['chat_messages'] = []
+        if 'extracted_text' not in st.session_state:
+            st.session_state['extracted_text'] = None
 
     def render_sidebar(self) -> None:
         """Render sidebar with settings"""
@@ -87,8 +115,11 @@ class StreamlitApp:
                 help=(
                     "If enabled, the app first asks Gemini for an executive "
                     "summary of your text and then builds the knowledge graph "
-                    "from that summary. This typically produces a higher-level, "
-                    "more focused graph."
+                    "from that summary. This produces a higher-level, more "
+                    "focused graph, but the summary drops most fine detail "
+                    "(dates, numbers, reasons), so nodes and relationships get "
+                    "little supporting context. Off by default: the graph is "
+                    "built from your full text."
                 ),
             )
 
@@ -165,7 +196,7 @@ class StreamlitApp:
                 ":material/delete_sweep: Clear",
                 type="secondary",
                 width="stretch",
-                on_click=self.clear_callback,
+                on_click=self.reset_app_state,
             )
 
         if extract_button:
@@ -174,14 +205,14 @@ class StreamlitApp:
             elif not st.session_state['settings'].gemini_api_key:
                 st.warning("Enter your Gemini API key in the sidebar to get started.", icon=":material/key:")
             else:
-                self.extract_knowledge_graph(sample_text)
+                self.run_extraction(sample_text)
 
         if st.session_state['knowledge_graph']:
             self.display_results()
         elif not sample_text.strip():
             st.caption("Paste text or upload a file above, then click Extract.")
 
-    def extract_knowledge_graph(self, sample_text: str) -> None:
+    def run_extraction(self, sample_text: str) -> None:
         """Extract executive summary and knowledge graph using Gemini API."""
         # Defense-in-depth: validate length even though text_area has max_chars,
         # because file upload path can truncate and update session_state directly
@@ -213,7 +244,7 @@ class StreamlitApp:
                     st.session_state['extractor'] = GeminiExtractor(
                         st.session_state['settings']
                     )
-                use_summary_for_kg = st.session_state.get('use_summary_for_kg', True)
+                use_summary_for_kg = st.session_state.get('use_summary_for_kg', False)
 
                 result = st.session_state['extractor'].extract_with_summary(
                     sample_text,
@@ -229,6 +260,7 @@ class StreamlitApp:
                 if not knowledge_graph.nodes or not knowledge_graph.relationships:
                     st.session_state['knowledge_graph'] = None
                     st.session_state['repair_report'] = None
+                    st.session_state['extracted_text'] = None
                     st.warning(
                         ":warning: Extraction completed but returned an empty knowledge graph. "
                         "Try providing more detailed text or a different passage."
@@ -238,7 +270,9 @@ class StreamlitApp:
 
                 repaired_graph, repair_report = repair_graph(knowledge_graph)
                 st.session_state['knowledge_graph'] = repaired_graph
+                st.session_state["graph_version"] = uuid.uuid4().hex
                 st.session_state['repair_report'] = repair_report
+                st.session_state['extracted_text'] = sample_text
 
                 st.toast("Knowledge graph extracted successfully.", icon=":material/check_circle:")
                 logger.info("Summary and knowledge graph extracted successfully.")
@@ -348,12 +382,16 @@ class StreamlitApp:
                 theme = "dark" if st.context.theme.type == "dark" else "light"
             except (AttributeError, KeyError):
                 theme = st.session_state['settings'].viz_theme
-            visualizer = GraphVisualizer(st.session_state['settings'], theme=theme)
-            visualizer.show_isolated = show_isolated
-
-            placeholder_ids = set(report.placeholder_nodes) if report else None
-            html_content = visualizer.generate_html(
-                st.session_state["knowledge_graph"], placeholder_ids=placeholder_ids
+            placeholder_ids = frozenset(report.placeholder_nodes) if report else frozenset()
+            graph = st.session_state["knowledge_graph"]
+            html_content = _build_graph_html(
+                graph,
+                # Set once per extraction; the JSON fallback covers a graph placed in
+                # session state without going through extract.
+                st.session_state.get("graph_version") or graph.model_dump_json(),
+                theme,
+                show_isolated,
+                placeholder_ids,
             )
 
             st.download_button(
@@ -405,7 +443,8 @@ class StreamlitApp:
                 {
                     "ID": node.id,
                     "Label": node.label,
-                    "Type": node.type
+                    "Type": node.type,
+                    "Context": node.context or "",
                 }
                 for node in sorted_nodes
             ]
@@ -416,7 +455,8 @@ class StreamlitApp:
                 {
                     "Source": rel.source_node_id,
                     "Type": rel.type,
-                    "Target": rel.target_node_id
+                    "Target": rel.target_node_id,
+                    "Context": rel.context or "",
                 }
                 for rel in sorted_rels
             ]
@@ -461,8 +501,13 @@ class StreamlitApp:
         else:
             st.info("No statistics to display")
 
+    @st.fragment
     def display_chat(self) -> None:
-        """Chat interface for asking questions about the extracted knowledge graph."""
+        """Chat interface for asking questions about the document and its knowledge graph.
+
+        A fragment, so a question reruns only this section instead of the whole
+        page (which rebuilt the graph visualization and every other tab).
+        """
         knowledge_graph = st.session_state.get('knowledge_graph')
         if not knowledge_graph:
             st.info(":information_source: Extract a knowledge graph first to chat about it.")
@@ -484,7 +529,7 @@ class StreamlitApp:
             is_first_question = session is None
             if is_first_question:
                 extractor = st.session_state['extractor']
-                session = GraphChatSession(
+                session = DocumentChatSession(
                     client=extractor.client,
                     model=st.session_state['settings'].gemini_model,
                 )
@@ -492,7 +537,11 @@ class StreamlitApp:
             with st.chat_message("assistant"):
                 with st.spinner("Thinking..."):
                     answer = (
-                        session.ask(question, graph=knowledge_graph)
+                        session.ask(
+                            question,
+                            graph=knowledge_graph,
+                            source_text=st.session_state['extracted_text'],
+                        )
                         if is_first_question
                         else session.ask(question)
                     )
@@ -511,8 +560,14 @@ class StreamlitApp:
             # after the history loop) stays visually stuck below chat_input until
             # some other interaction reruns the script - rerunning immediately
             # makes the history loop redraw everything, including this exchange,
-            # in the correct order on top.
-            st.rerun()
+            # in the correct order on top. Scoped to the fragment so the rest of
+            # the page isn't rerun a second time. A fragment-scoped rerun is only
+            # valid during a fragment rerun; on a full script run (e.g. under
+            # AppTest) fall back to a full one so the exchange still redraws.
+            try:
+                st.rerun(scope="fragment")
+            except StreamlitInvalidLayoutContextError:
+                st.rerun()
         except ExtractionError as e:
             st.error(f":x: {e.user_message}")
             logger.error(f"ExtractionError during chat: {e}")
@@ -520,7 +575,7 @@ class StreamlitApp:
             st.error(":x: An unexpected error occurred while answering the question.")
             logger.exception("Unexpected error during chat")
 
-    def clear_callback(self):
+    def reset_app_state(self):
         """Callback function to clear all state when Clear button is clicked."""
         if st.session_state.extractor:
             try:
@@ -529,10 +584,12 @@ class StreamlitApp:
                 logger.warning("Error closing extractor", exc_info=True)
 
         st.session_state.knowledge_graph = None
+        st.session_state.graph_version = None
         st.session_state.repair_report = None
         st.session_state.executive_summary = None
         st.session_state.chat_session = None
         st.session_state.chat_messages = []
+        st.session_state.extracted_text = None
         st.session_state.extractor = None
         st.session_state.input_text = ''
         st.session_state.file_uploader_key += 1

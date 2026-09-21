@@ -4,7 +4,7 @@ import pytest
 
 from nodus.errors import MissingAPIKeyError
 from nodus.extractor import GeminiExtractor
-from nodus.models import ExecutiveSummary, KnowledgeGraph
+from nodus.models import ExecutiveSummary, KnowledgeGraph, extraction_json_schema
 from nodus.settings import Settings
 
 
@@ -34,7 +34,7 @@ class TestConfigs:
     def test_kg_config_uses_json_schema(self):
         extractor = make_extractor()
         response_format = extractor.kg_config["response_format"]
-        assert response_format["schema"] == KnowledgeGraph.model_json_schema()
+        assert response_format["schema"] == extraction_json_schema()
         assert response_format["mime_type"] == "application/json"
 
     def test_summary_config_uses_json_schema(self):
@@ -205,3 +205,29 @@ class TestSummarize:
         extractor.summarize("Alice works at Acme Corp.")
         extractor.extract("Alice works at Acme Corp.")
         assert extractor.client.interactions.create.call_count == 2
+
+
+class TestExtractionSource:
+    """By default the graph is built from the original text, not the summary:
+    the summary drops the dates/numbers/reasons that `context` is meant to hold."""
+
+    def _extractor(self):
+        extractor = make_extractor()
+        extractor.summarize = MagicMock(return_value=ExecutiveSummary(summary="Short summary."))
+        extractor.extract = MagicMock(return_value=sample_kg())
+        return extractor
+
+    def test_default_extracts_graph_from_original_text(self):
+        extractor = self._extractor()
+        extractor.extract_with_summary("The full original text.")
+        extractor.extract.assert_called_once_with("The full original text.")
+
+    def test_default_still_produces_a_summary(self):
+        extractor = self._extractor()
+        result = extractor.extract_with_summary("The full original text.")
+        assert result.summary is not None
+
+    def test_opting_in_extracts_graph_from_the_summary(self):
+        extractor = self._extractor()
+        extractor.extract_with_summary("The full original text.", use_summary_for_kg=True)
+        extractor.extract.assert_called_once_with("Short summary.")

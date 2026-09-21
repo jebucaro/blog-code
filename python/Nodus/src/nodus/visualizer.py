@@ -1,8 +1,6 @@
 import hashlib
 import json
 import logging
-import webbrowser
-from pathlib import Path
 
 from pyvis.network import Network
 
@@ -161,6 +159,8 @@ class GraphVisualizer:
                 display_label = node.label if node.label else ' '.join(
                     word.capitalize() for word in node.id.split('_'))
                 tooltip = f"{display_label}\nType: {node.type}\nID: {node.id}"
+                if node.context:
+                    tooltip += f"\n{node.context}"
 
                 node_options = {
                     "label": display_label,
@@ -200,6 +200,8 @@ class GraphVisualizer:
                         source_label,
                         target_label
                     )
+                    if rel.context:
+                        edge_tooltip += f"\n{rel.context}"
 
                     display_label = rel.type.replace('_', ' ').title()
 
@@ -518,34 +520,3 @@ class GraphVisualizer:
         )
         logger.info("Generated HTML visualization in memory")
         return html_content
-
-    def visualize(
-            self,
-            graph: KnowledgeGraph,
-            output_file: str = "output/knowledge_graph.html",
-            auto_open: bool = True
-    ) -> Path:
-        """Generate and save HTML visualization to a file."""
-        net, _ = self._build_network(graph)
-
-        output_path = Path(output_file).resolve()
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        net.save_graph(str(output_path))
-
-        logger.info(f"Saved visualization to {output_path}")
-
-        if auto_open:
-            try:
-                webbrowser.open(f"file://{output_path}")
-            except Exception:
-                logger.warning("Could not open browser automatically", exc_info=True)
-
-        return output_path
-
-    def _get_connected_nodes(self, graph: KnowledgeGraph) -> set[str]:
-        """Get IDs of nodes that have relationships"""
-        connected = set()
-        for rel in graph.relationships:
-            connected.add(rel.source_node_id)
-            connected.add(rel.target_node_id)
-        return connected

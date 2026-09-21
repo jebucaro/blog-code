@@ -63,6 +63,13 @@ class TestConfigs:
         assert "safety_settings" not in extractor.kg_config
         assert "safety_settings" not in extractor.summary_config
 
+    def test_configs_disable_server_side_storage(self):
+        """Extractions are one-shot calls, never chained via previous_interaction_id,
+        so there's no reason for Gemini to retain the input/output server-side."""
+        extractor = make_extractor()
+        assert extractor.kg_config["store"] is False
+        assert extractor.summary_config["store"] is False
+
 
 class TestCacheKey:
     def test_cache_key_includes_model_and_thinking_level(self):

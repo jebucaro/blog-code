@@ -192,6 +192,9 @@ class GeminiExtractor:
         # NOTE: safety_settings is accepted by the SDK's request schema but rejected
         # (400 invalid_request) by the standard Gemini API on the Interactions endpoint;
         # it's only available on the Gemini Enterprise Agent Platform. Do not add it here.
+        # store=False: each call is a one-shot extraction, never chained via
+        # previous_interaction_id, so there's no reason to have Gemini retain
+        # the (potentially sensitive) input text and output for up to 55 days.
         self.kg_config: dict[str, Any] = {
             "system_instruction": SYSTEM_PROMPT,
             "response_format": {
@@ -199,6 +202,7 @@ class GeminiExtractor:
                 "mime_type": "application/json",
                 "schema": KnowledgeGraph.model_json_schema(),
             },
+            "store": False,
         }
         if self.settings.thinking_level != "default":
             self.kg_config["generation_config"] = {"thinking_level": self.settings.thinking_level}
@@ -210,6 +214,7 @@ class GeminiExtractor:
                 "mime_type": "application/json",
                 "schema": ExecutiveSummary.model_json_schema(),
             },
+            "store": False,
         }
 
         logger.info("Initialized Gemini extractor")

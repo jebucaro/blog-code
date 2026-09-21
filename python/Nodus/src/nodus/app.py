@@ -3,12 +3,12 @@ import logging
 import streamlit as st
 
 from nodus.chat import GraphChatSession
+from nodus.errors import ExtractionError
 from nodus.extractor import GeminiExtractor
 from nodus.models import sort_relationships
 from nodus.repair import repair_graph
-from nodus.settings import Settings, AVAILABLE_MODELS, DEFAULT_MODEL, MAX_INPUT_LENGTH
+from nodus.settings import AVAILABLE_MODELS, DEFAULT_MODEL, MAX_INPUT_LENGTH, Settings
 from nodus.visualizer import GraphVisualizer
-from nodus.errors import ExtractionError
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +145,7 @@ class StreamlitApp:
                     st.error(":x: Could not read file. Please ensure it's a text file in UTF-8 encoding.")
                 except Exception as e:
                     st.error(f":x: Error reading file: {e}")
+                    logger.exception("Error reading uploaded file")
 
             sample_text = st.text_area(
                 "Enter text to extract knowledge graph",
@@ -244,9 +245,9 @@ class StreamlitApp:
         except ExtractionError as e:
             st.error(f":x: {e.user_message}")
             logger.error(f"ExtractionError while extracting knowledge graph: {e}")
-        except Exception as e:
+        except Exception:
             st.error(":x: An unexpected error occurred while extracting the knowledge graph.")
-            logger.exception(f"Unexpected error extracting knowledge graph: {e}")
+            logger.exception("Unexpected error extracting knowledge graph")
 
     def display_results(self) -> None:
         """Display the extracted knowledge graph"""
@@ -365,9 +366,9 @@ class StreamlitApp:
 
             st.iframe(html_content, height=850)
 
-        except Exception as e:
+        except Exception:
             st.error(":x: There was a problem rendering the visualization. The raw data is still available below.")
-            logger.exception(f"Error displaying visualization: {e}")
+            logger.exception("Error displaying visualization")
 
     def display_raw_data(self):
         """Display raw knowledge graph data."""
@@ -440,7 +441,7 @@ class StreamlitApp:
                 st.metric("Total Relationships", len(kg.relationships))
 
             with col3:
-                rel_types = len(set(rel.type for rel in kg.relationships))
+                rel_types = len({rel.type for rel in kg.relationships})
                 st.metric("Relationship Types", rel_types)
 
             st.subheader("Node types distribution")
@@ -515,17 +516,17 @@ class StreamlitApp:
         except ExtractionError as e:
             st.error(f":x: {e.user_message}")
             logger.error(f"ExtractionError during chat: {e}")
-        except Exception as e:
+        except Exception:
             st.error(":x: An unexpected error occurred while answering the question.")
-            logger.exception(f"Unexpected error during chat: {e}")
+            logger.exception("Unexpected error during chat")
 
     def clear_callback(self):
         """Callback function to clear all state when Clear button is clicked."""
         if st.session_state.extractor:
             try:
                 st.session_state.extractor.close()
-            except Exception as e:
-                logger.warning(f"Error closing extractor: {e}")
+            except Exception:
+                logger.warning("Error closing extractor", exc_info=True)
 
         st.session_state.knowledge_graph = None
         st.session_state.repair_report = None

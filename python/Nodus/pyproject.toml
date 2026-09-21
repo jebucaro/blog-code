@@ -39,3 +39,7 @@ source = ["src/nodus"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[[tool.mypy.overrides]]
+module = "pyvis.*"
+ignore_missing_imports = true

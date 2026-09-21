@@ -85,7 +85,7 @@ class TestCacheKey:
         assert a != b
 
 
-from nodus.errors import (  # noqa: E402
+from nodus.errors import (
     APIUnavailableError,
     NetworkError,
     ParsingError,
@@ -93,7 +93,7 @@ from nodus.errors import (  # noqa: E402
     TokenLimitError,
     UnknownAPIError,
 )
-from nodus.settings import MAX_INPUT_LENGTH  # noqa: E402
+from nodus.settings import MAX_INPUT_LENGTH
 
 
 def make_response(output_text=None, status="completed"):

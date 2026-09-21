@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from nodus.models import KnowledgeGraph, Node, Relationship, NODE_TYPES, sort_relationships
+from nodus.models import NODE_TYPES, KnowledgeGraph, Node, Relationship, sort_relationships
 
 
 class TestNode:

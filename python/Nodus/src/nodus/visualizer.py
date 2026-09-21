@@ -181,6 +181,7 @@ class GraphVisualizer:
                     net.add_node(node.id, **node_options)
                     types_present.add(node_type)
                 except Exception:
+                    logger.warning("Skipping node %r: failed to add to visualization", node.id, exc_info=True)
                     continue
 
         for rel in valid_edges:
@@ -215,6 +216,9 @@ class GraphVisualizer:
                         arrows={"to": {"enabled": True, "scaleFactor": 1.2}}
                     )
             except Exception:
+                logger.warning(
+                    "Skipping relationship %r: failed to add to visualization", rel.id, exc_info=True
+                )
                 continue
 
         if self.physics_enabled:
@@ -534,7 +538,7 @@ class GraphVisualizer:
             try:
                 webbrowser.open(f"file://{output_path}")
             except Exception:
-                logger.warning("Could not open browser automatically")
+                logger.warning("Could not open browser automatically", exc_info=True)
 
         return output_path
 

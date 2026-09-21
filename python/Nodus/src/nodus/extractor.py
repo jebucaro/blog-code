@@ -8,9 +8,6 @@ from typing import Any, TypeVar
 import pydantic
 from google import genai
 
-from nodus.models import KnowledgeGraph, ExecutiveSummary, ExtractionResult, NODE_TYPES, RELATIONSHIP_TYPE_EXAMPLES
-from nodus.security import wrap_untrusted_content
-from nodus.settings import Settings, MAX_INPUT_LENGTH
 from nodus.errors import (
     ExtractionError,
     MissingAPIKeyError,
@@ -19,6 +16,15 @@ from nodus.errors import (
     default_user_messages,
     map_api_error,
 )
+from nodus.models import (
+    NODE_TYPES,
+    RELATIONSHIP_TYPE_EXAMPLES,
+    ExecutiveSummary,
+    ExtractionResult,
+    KnowledgeGraph,
+)
+from nodus.security import wrap_untrusted_content
+from nodus.settings import MAX_INPUT_LENGTH, Settings
 
 logger = logging.getLogger(__name__)
 
@@ -317,7 +323,7 @@ class GeminiExtractor:
                 try:
                     on_progress(msg)
                 except Exception:
-                    pass
+                    logger.warning("on_progress callback raised an exception", exc_info=True)
 
         summary: ExecutiveSummary | None = None
 
@@ -348,7 +354,10 @@ class GeminiExtractor:
         try:
             if hasattr(self, 'client') and self.client:
                 self.client.close()
-        except Exception:
+        # This runs from __del__ too, where logging can itself raise during
+        # interpreter shutdown (handlers may already be torn down) - swallow
+        # silently rather than risk a secondary exception on cleanup.
+        except Exception:  # noqa: BLE001, S110
             pass
 
     def __del__(self):

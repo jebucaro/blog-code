@@ -28,6 +28,7 @@ Here's a list of all the code examples and their corresponding blog posts.
 | Date      | Language | Title                                                                                             | Folder                |
 |-----------|----------|---------------------------------------------------------------------------------------------------|-----------------------|
 | 2025-10   | Python   | [Create a Knowledge Graph From Text With Gemini](https://jonathanbucaro.com/blog/create-a-knowledge-graph-from-text-with-gemini/) | [Nodus](./nodus) |
+| 2026-10   | HTML     | AWS Community Day Guatemala 2026 (post pending) | [AWS Community Day GT 2026](./aws-community-day-gt-2026) |
 
 
 ## 👨‍💻 About the Author

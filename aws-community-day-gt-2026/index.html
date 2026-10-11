@@ -1,0 +1,1570 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Convierte tus Scripts y CLI en herramientas AI-Native usando SKILLs</title>
+    <link rel="icon" href="assets/img/aws_cd_logo.png" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; background: #0a0a0a; overflow: hidden; }
+      hyperframes-slideshow { display: block; position: relative; width: 100vw; height: 100vh; }
+      hyperframes-player { position: absolute; inset: 0; }
+    </style>
+    <script src="player.js"></script>
+    <script src="slideshow.js"></script>
+  </head>
+  <body>
+    <hyperframes-slideshow tabindex="0">
+      <hyperframes-player interactive srcdoc="<!doctype html>
+<html lang=&quot;es&quot;>
+  <head>
+    <meta charset=&quot;UTF-8&quot; />
+    <meta name=&quot;viewport&quot; content=&quot;width=1920, height=1080&quot; />
+    <title>Convierte tus Scripts y CLI en herramientas AI-Native usando SKILLs</title>
+    <script src=&quot;https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js&quot;></script>
+    <style>
+
+      @font-face { font-family: &quot;Inter&quot;; src: url(&quot;assets/fonts/Inter-400.woff2&quot;) format(&quot;woff2&quot;); font-weight: 400; }
+      @font-face { font-family: &quot;Inter&quot;; src: url(&quot;assets/fonts/Inter-700.woff2&quot;) format(&quot;woff2&quot;); font-weight: 700; }
+      @font-face { font-family: &quot;JetBrains Mono&quot;; src: url(&quot;assets/fonts/JetBrainsMono-400.woff2&quot;) format(&quot;woff2&quot;); font-weight: 400; }
+      @font-face { font-family: &quot;JetBrains Mono&quot;; src: url(&quot;assets/fonts/JetBrainsMono-700.woff2&quot;) format(&quot;woff2&quot;); font-weight: 700; }
+
+      /* Paleta: estilo terminal con los colores del evento AWS Community Day Guatemala */
+      :root {
+        --bg: #1d1b28; --bg-deep: #16141f; --grid: #26243a;
+        --panel: #252336; --panel-2: #2c2a40; --code-bg: #14131c; --code-bar: #232133;
+        --line: rgba(238,236,246,0.12); --line-strong: rgba(238,236,246,0.2);
+        --ink: #eeecf6; --muted: #aeabc0; --faint: #8f8ca3; --dim: #77748e;
+        --accent: #ed9515; --accent-soft: rgba(237,149,21,0.55);
+        --green: #7fd06f; --purple: #cf96cb; --cyan: #3fc6dc; --sage: #8fd4a6; --sky: #8ec3ea;
+        --sky-fill: #6daddd; --green-fill: #56b446; --purple-fill: #9c5a98;
+        --red: #ff6b6b;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; font-family: &quot;Inter&quot;, system-ui, sans-serif; color: var(--ink); }
+      #tl-pad { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+      .scene { position: absolute; inset: 0; overflow: hidden; background-color: var(--bg);
+        background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 128px 128px; background-position: -1px -1px; }
+      .scene.dark { background-color: var(--bg-deep); }
+      .tile { position: absolute; top: 0; left: 0; width: 96px; height: 96px; background: var(--block); display: flex; align-items: center; justify-content: center; }
+      .tile img { width: 66px; height: auto; display: block; }
+      .scene.band::after { content: &quot;&quot;; position: absolute; left: 0; right: 0; bottom: 0; height: 112px; background: var(--accent); }
+      .frame { position: absolute; inset: 0; padding: 120px 120px 130px; display: flex; flex-direction: column; justify-content: center; gap: 40px; z-index: 1; }
+      .kicker { position: absolute; top: 52px; left: 120px; font: 700 22px/1 &quot;JetBrains Mono&quot;, monospace; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 14px; }
+      .kmark { display: block; width: 12px; height: 26px; background: var(--block); }
+      .brand { position: absolute; top: 18px; right: 112px; }
+      .brand img { height: 84px; width: auto; display: block; }
+      .foot { position: absolute; bottom: 48px; left: 120px; font: 400 22px/1 &quot;JetBrains Mono&quot;, monospace; color: var(--faint); display: flex; gap: 14px; }
+      .fnum { color: var(--block-ink); }
+      .band .foot { color: var(--bg); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+      .band .fnum { color: var(--bg); }
+
+      h1, h2 { font-weight: 700; letter-spacing: -0.025em; line-height: 1.08; color: var(--ink); }
+      .title { font-size: 72px; max-width: 1640px; }
+      .title.xl { font-size: 104px; }
+      .hl { color: var(--accent); }
+      .lead { font-size: 40px; line-height: 1.4; color: var(--muted); max-width: 1500px; }
+      .mono { font-family: &quot;JetBrains Mono&quot;, monospace; }
+      .muted { color: var(--muted); }
+      .ok { color: var(--green); } .bad { color: var(--red); }
+      .row { display: flex; gap: 40px; }
+      .col { display: flex; flex-direction: column; gap: 28px; }
+      .grow { flex: 1; min-width: 0; }
+      .center { align-items: center; justify-content: center; }
+
+      .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 36px 40px; }
+      .card h3 { font-size: 42px; letter-spacing: -0.015em; line-height: 1.15; margin-bottom: 14px; }
+      .card p { font-size: 34px; line-height: 1.4; color: var(--muted); }
+      .card:has(> .links) { display: flex; flex-direction: column; }
+      .card .links { display: flex; flex-direction: column; gap: 8px; margin-top: auto; padding-top: 26px; font: 400 24px/1.4 &quot;JetBrains Mono&quot;, monospace; }
+      .card .links a { color: var(--cyan); text-decoration: none; }
+      .card.accent { border-color: var(--accent-soft); }
+      .card.red { border-color: rgba(255,107,107,0.55); }
+      .card.green { border-color: rgba(127,208,111,0.55); }
+      .num { font: 700 30px/1 &quot;JetBrains Mono&quot;, monospace; color: var(--accent); margin-bottom: 18px; display: block; }
+      .icon { width: 72px; height: 72px; display: block; margin-bottom: 22px; }
+
+      .code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+      .code .bar { height: 52px; background: var(--code-bar); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; padding: 0 22px; }
+      .code .dot { width: 14px; height: 14px; border-radius: 50%; background: #3a3752; display: block; }
+      .code .fname { margin-left: 14px; font: 400 22px/1 &quot;JetBrains Mono&quot;, monospace; color: var(--muted); }
+      .code pre { margin: 0; padding: 26px 34px; font: 400 32px/1.5 &quot;JetBrains Mono&quot;, monospace; color: var(--ink); white-space: pre; }
+      .code.sm pre { font-size: 28px; }
+      .code.lg pre { font-size: 38px; }
+      .c-com { color: var(--faint); font-style: italic; } .c-str { color: var(--sky); } .c-num { color: var(--cyan); }
+      .c-kw { color: var(--purple); } .c-flag { color: var(--accent); } .c-cmd { color: #dcc0f2; } .c-key { color: var(--sage); }
+      .c-head { color: var(--accent); font-weight: 700; } .c-tag { color: var(--sage); } .c-prompt { color: var(--green); }
+      .c-bold { color: var(--ink); font-weight: 700; } .c-ic { color: var(--accent); } .c-fm { color: var(--dim); }
+
+      .tag { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 999px; font: 700 28px/1 &quot;JetBrains Mono&quot;, monospace; border: 2px solid currentColor; }
+      .chip { display: inline-flex; align-items: center; padding: 14px 26px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); font: 400 32px/1 &quot;JetBrains Mono&quot;, monospace; color: var(--ink); }
+      .list { display: flex; flex-direction: column; gap: 22px; }
+      .li { display: flex; gap: 22px; align-items: baseline; font-size: 38px; line-height: 1.35; }
+      .li .b { flex: none; font: 700 32px/1 &quot;JetBrains Mono&quot;, monospace; color: var(--green); width: 40px; }
+      .li code, .card code, .lead code, td code, .ic { font-family: &quot;JetBrains Mono&quot;, monospace; color: var(--accent); font-size: 0.88em; }
+      .quote { font-size: 54px; line-height: 1.2; font-weight: 700; letter-spacing: -0.02em; border-left: 8px solid var(--accent); padding-left: 36px; }
+
+      table.t { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 32px; line-height: 1.3; }
+      table.t th { text-align: left; font: 700 28px/1.2 &quot;JetBrains Mono&quot;, monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 24px 18px; border-bottom: 2px solid var(--line-strong); }
+      table.t td { padding: 13px 22px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      table.t td:first-child { color: var(--muted); white-space: nowrap; }
+      table.t th.hcli { color: var(--accent); } table.t th.hmcp { color: var(--sky); }
+
+      .flow { display: flex; align-items: center; gap: 18px; }
+      .node { background: var(--panel); border: 2px solid var(--line-strong); border-radius: 18px; padding: 28px 30px; font-size: 34px; line-height: 1.25; text-align: center; }
+      .node small { display: block; font: 400 24px/1.3 &quot;JetBrains Mono&quot;, monospace; color: var(--muted); margin-top: 10px; }
+      .flow.even { align-items: stretch; }
+      .flow.even .node { flex: 1 1 0; display: flex; flex-direction: column; justify-content: center; }
+      .flow.even .arrow { align-self: center; }
+      .arrow { flex: none; font: 700 48px/1 &quot;JetBrains Mono&quot;, monospace; color: var(--faint); }
+      .hl-box { position: relative; }
+      .hl-bg { position: absolute; inset: -4px -14px; border-radius: 10px; display: block; }
+      .legend { display: flex; align-items: center; gap: 20px; font-size: 36px; }
+      .sw { flex: none; width: 34px; height: 34px; border-radius: 8px; display: block; }
+      .placeholder { border: 3px dashed rgba(238,236,246,0.3); border-radius: 18px; display: flex; align-items: center; justify-content: center; text-align: center; font: 400 24px/1.4 &quot;JetBrains Mono&quot;, monospace; color: var(--muted); }
+      .cursor { display: inline-block; width: 0.6em; height: 1.1em; vertical-align: -0.18em; background: var(--accent); animation: blink 1.1s steps(1) infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+
+    </style>
+  </head>
+  <body>
+    <script type=&quot;application/hyperframes-slideshow+json&quot;>
+{
+  &quot;slides&quot;: [
+    {
+      &quot;sceneId&quot;: &quot;s01-portada&quot;,
+      &quot;notes&quot;: &quot;[BLOQUE 1 · APERTURA ≈5 min]\n\n\&quot;Buenas, gracias por estar aquí. Hoy no vengo a venderles el framework de agentes más nuevo ni a pedirles que reescriban su stack. Vengo a hablarles de algo que ya tienen en su laptop: esos scripts y CLIs que usan todos los días, y de cómo enseñarle a un agente de IA a usarlos de forma correcta y repetible.\&quot;\n\nHilo conductor: No necesitas un MCP ni un framework gigante para que la IA te ayude en producción. Necesitas herramientas deterministas y un buen manual para el agente.&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s01b-patrocinadores&quot;,
+      &quot;notes&quot;: &quot;\&quot;Antes de empezar, un agradecimiento a los patrocinadores que hacen posible el AWS Community Day Guatemala: Universidad Landívar, AWS, Banco Industrial, JetBrains, GBM, proticket.io, HTEC e Improving. Gracias por apoyar a la comunidad.\&quot;&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s02-fomo&quot;,
+      &quot;notes&quot;: &quot;\&quot;Levanten la mano con honestidad: ¿quién ha sentido en los últimos meses que si no está construyendo un servidor MCP o montando un framework de agentes, ya se quedó atrás?\&quot; [pausa, contar manos]\n\n\&quot;Tranquilos, no están solos. Cada semana sale algo nuevo, y es fácil sentir que lo que sabemos hacer ya no sirve. Spoiler: sí sirve, y mucho.\&quot;\n\nNOTA: Deja que la audiencia responda. Si muchos levantan la mano, úsalo: \&quot;Perfecto, esta charla es para ustedes\&quot;.&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s03-realidad&quot;,
+      &quot;notes&quot;: &quot;\&quot;Segunda pregunta. Cuando producción se cae, cuando hay que dar soporte rápido o cuando el jefe pide un reporte que la plataforma no genera... ¿qué es lo primero que hacemos?\&quot;\n\n[esperar respuestas: 'reviso logs', 'abro la consola', 'corro un query', 'hago un script'] → AVANZA para mostrar las respuestas.\n\n\&quot;Exacto. Nadie dice 'voy a construir un servidor MCP'. Abrimos la terminal, corremos un query, armamos un script rápido en Python o Bash.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        13.5,
+        14.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s04-antipatron&quot;,
+      &quot;notes&quot;: &quot;\&quot;Y cuando metemos IA, normalmente pasa esto: copiamos logs, pegamos un CSV, le pedimos al modelo que 'genere el reporte' o 'encuentre el error'. El modelo hace su mejor esfuerzo con lo que le dimos... que casi siempre es incompleto.\&quot;\n\nAVANZA → etiquetas rojas.\n\n\&quot;Y lo peor: si mañana pedimos lo mismo, el resultado puede ser distinto. Le estamos pidiendo al modelo que *calcule* cosas que deberían estar *programadas*.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        16.5,
+        17.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s05-idea&quot;,
+      &quot;notes&quot;: &quot;\&quot;Esta es la idea de toda la charla: dejemos que el modelo haga lo que hace bien, entender la intención, decidir e interpretar, y que nuestros scripts hagan lo que hacen bien: ejecutar exactamente lo mismo cada vez.\&quot;\n\nAVANZA → diagrama. AVANZA → SKILL.md.\n\n\&quot;El puente entre ambos es un skill: un archivo markdown que le enseña al agente cuándo y cómo usar tu herramienta. Sin servidores, sin infraestructura nueva. Tu script de siempre, más un buen manual.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        19.5,
+        20.5,
+        21.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s06-pilares&quot;,
+      &quot;notes&quot;: &quot;[BLOQUE 2 · LOS 4 PILARES ≈5 min]\n\n\&quot;Para llegar ahí propongo cuatro pasos.\&quot; (AVANZA en cada pilar)\n\n1. \&quot;Primero, hacer la herramienta determinista: nada de valores quemados en el código.\&quot;\n2. \&quot;Segundo, definir el trigger semántico: explicarle al agente en lenguaje claro cuándo debe usarla.\&quot;\n3. \&quot;Tercero, mostrarle el camino con ejemplos concretos.\&quot;\n4. \&quot;Y cuarto, empaquetar todo en un SKILL.md. Vamos uno por uno.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        23.5,
+        24.5,
+        25.5,
+        26.5,
+        27.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s07-antes-despues&quot;,
+      &quot;notes&quot;: &quot;\&quot;Todos tenemos este script. El que tiene el host de producción quemado y el user_id que cambiamos a mano cada vez. Funciona para nosotros, pero un agente no puede usarlo con seguridad.\&quot;\n\nAVANZA → Después.\n\n\&quot;A la derecha está la misma lógica convertida en una herramienta: parámetros explícitos, ambiente explícito, formato de salida explícito. Ese pequeño cambio es el 80% del trabajo.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        29.5,
+        30.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s10-casos-uso&quot;,
+      &quot;notes&quot;: &quot;[BLOQUE 3 · DEEP DIVE ≈12 min]\n\n\&quot;Antes de escribir una sola línea de código, la guía de Anthropic recomienda definir dos o tres casos de uso concretos: qué diría el usuario, qué pasos hay que seguir y cuál es el resultado esperado.\&quot;\n\n\&quot;Esto les da gratis los insumos de los cuatro pilares: los parámetros de los pasos se vuelven flags, las frases del usuario se vuelven el trigger, y los pasos se vuelven los ejemplos.\&quot;\n\n\&quot;La guía distingue dos formas de pensar un skill: problem-first, donde el usuario describe un resultado y el skill orquesta las herramientas, y tool-first, donde la herramienta ya existe y el skill aporta la experiencia para usarla bien. Un skill para su CLI es tool-first: el script ya lo tienen, lo que falta es enseñarle al agente a usarlo.\&quot;&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s08-determinista&quot;,
+      &quot;notes&quot;: &quot;\&quot;¿Qué hace que un CLI sea bueno para un agente? Curiosamente, lo mismo que lo hace bueno para un humano en un pipeline. Flags explícitos, salida en JSON para que el agente no tenga que adivinar parseando texto, errores que digan qué valores sí acepta para que corrija sin adivinar, y exit codes que digan si algo falló.\&quot;\n\nAVANZA → las dos que la gente olvida.\n\n\&quot;Dos que la gente olvida: no pongan prompts interactivos, porque el agente se queda colgado esperando, y para cualquier cosa que borre o modifique, --dry-run. Ustedes no quieren que un agente haga un DELETE en producción por un malentendido.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        36.5,
+        37.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s09-herramientas&quot;,
+      &quot;notes&quot;: &quot;\&quot;No tienen que escribir el parsing a mano. En Python, Typer les genera el CLI a partir de los type hints de una función; Click si quieren más control; argparse si no quieren dependencias. En Node, Commander para casi todo y oclif si el CLI va a crecer mucho.\&quot;\n\n\&quot;Ojo: estas librerías son dependencias de su proyecto, van en el pyproject.toml o el package.json, nunca instaladas globalmente. Lo que sí se instala como herramienta es su CLI: con uvx o npx el agente puede ejecutarla sin instalación previa, y con uv tool install o npm i -g queda disponible en el PATH, cada una con sus dependencias aisladas.\&quot;&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s11-trigger&quot;,
+      &quot;notes&quot;: &quot;\&quot;El segundo pilar es el más subestimado. Un agente con varias skills disponibles decide cuál usar leyendo una descripción corta. No lee su código, no adivina. Si la descripción dice 'herramienta de reportes', el agente no tiene idea de cuándo aplica.\&quot;\n\nAVANZA → la buena.\n\n\&quot;La buena descripción responde dos preguntas: qué hace y cuándo usarla, con las palabras que un usuario realmente diría: 'reporte', 'ventas del mes', 'cliente'.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        43.5,
+        44.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s12-frontmatter&quot;,
+      &quot;notes&quot;: &quot;\&quot;La guía de Anthropic es muy concreta aquí. La descripción tiene que decir qué hace y cuándo usarla, idealmente con las frases exactas que diría un usuario. Tiene un límite de 1024 caracteres y no admite símbolos de menor o mayor, porque ese texto termina en el system prompt del agente y podría usarse para inyectar instrucciones.\&quot;\n\n\&quot;El nombre va en kebab-case y debe coincidir con la carpeta. Y si su skill se activa cuando no debe, agreguen triggers negativos: díganle explícitamente cuándo NO usarla.\&quot;\n\nAVANZA → ejemplos malos de la guía.\n\n\&quot;Piénsenlo como el SEO de su herramienta, pero para un agente.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        46.5,
+        47.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s13-ejemplos&quot;,
+      &quot;notes&quot;: &quot;\&quot;Tercer pilar: ejemplos. Los modelos aprenden muchísimo de ejemplos concretos. No basta con documentar los flags; muéstrenle la petición del usuario, el comando exacto y cómo se ve la salida.\&quot;\n\n\&quot;Así el agente sabe qué esperar y puede detectar cuando algo salió mal. Dos o tres ejemplos bien escogidos valen más que diez páginas de documentación.\&quot;&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s14-troubleshooting&quot;,
+      &quot;notes&quot;: &quot;\&quot;Y no se olviden del camino triste. La guía propone un formato simple: error, causa, solución. ¿Qué hace el agente si el usuario no existe? ¿Si producción no responde? Ese conocimiento lo tienen ustedes de las veces que el script falló a las 3 de la mañana.\&quot;\n\nAVANZA → la frase.\n\n\&quot;Y hay una frase de la guía que resume toda esta charla: el código es determinista, la interpretación del lenguaje no. Por eso Anthropic recomienda que las validaciones críticas no se dejen como instrucciones en texto, sino como un script que las haga. Eso es exactamente el pilar 1.\&quot;\n\n\&quot;Un detalle más de la guía: cuando el agente no sigue las instrucciones, casi siempre es porque son muy largas, ambiguas o están enterradas. Lo crítico va arriba, en pocas líneas.\&quot;\n\nNOTA: Esta slide conecta el pilar 3 con el pilar 1; buen momento para pausar.&quot;,
+      &quot;fragments&quot;: [
+        53.5,
+        54.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s15-anatomia&quot;,
+      &quot;notes&quot;: &quot;\&quot;El cuarto pilar es empaquetar. Un skill es simplemente una carpeta con un SKILL.md. Arriba, un frontmatter YAML con name y description, que es el trigger que vimos. Abajo, instrucciones en markdown. Opcionalmente, carpetas para scripts, documentación de referencia y assets.\&quot;\n\n\&quot;¿Y dónde vive esa carpeta? El agente la busca en un lugar fijo: dentro de .claude/skills para Claude Code o .kiro/skills para Kiro. Si la ponen en el proyecto, el skill solo existe ahí y viaja con el repo para todo el equipo; si la ponen en su carpeta personal, en ~/.claude/skills o ~/.kiro/skills, la tienen disponible en todos sus proyectos.\&quot;\n\nAVANZA → reglas críticas.\n\n\&quot;Ojo con los detalles que más fallan: el archivo se llama exactamente SKILL.md en mayúsculas, la carpeta en kebab-case, y no pongan un README dentro del skill: toda la documentación va en el SKILL.md o en references. El README va en la raíz del repo, para los humanos.\&quot;\n\n\&quot;Para CLIs, el campo compatibility es útil para declarar requisitos: 'requiere Python 3.11 y acceso a red'.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        56.5,
+        57.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s16-progressive&quot;,
+      &quot;notes&quot;: &quot;\&quot;¿Por qué esto escala mejor que meter todo en el prompt? Por algo que se llama progressive disclosure.\&quot;\n\nAVANZA (nivel 1) \&quot;El agente solo tiene cargado el nombre y la descripción de cada skill: lo justo para decidir si aplica, sin cargar todo lo demás.\&quot;\nAVANZA (nivel 2) \&quot;Cuando decide usar una, lee el SKILL.md completo.\&quot;\nAVANZA (nivel 3) \&quot;Y si necesita más detalle, abre un archivo de referencia. Los scripts ni siquiera entran al contexto: se ejecutan y solo regresa la salida.\&quot;\n\n\&quot;Por eso pueden tener decenas de skills instaladas; la guía sugiere mantener el SKILL.md por debajo de cinco mil palabras y mover el detalle a references. Y algo importante: Anthropic publicó Agent Skills como estándar abierto, igual que hizo con MCP, así que el mismo skill está pensado para funcionar en otras plataformas.\&quot;\n\nNOTA: Si mencionas qué otras herramientas ya adoptaron el estándar, verifica la lista actual antes de la charla.&quot;,
+      &quot;fragments&quot;: [
+        59.5,
+        60.5,
+        61.5,
+        62.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s17-pruebas&quot;,
+      &quot;notes&quot;: &quot;\&quot;Un skill no está terminado cuando lo escriben, sino cuando lo prueban. La guía propone tres pruebas: que se active cuando debe y no cuando no debe, que funcione bien, y que realmente mejore el resultado frente a no tenerla.\&quot;\n\nAVANZA → tabla de señales.\n\n\&quot;Armen una lista de diez o veinte frases: unas que deberían activarlo, otras que no. La guía pone una meta de referencia: que se active en alrededor del 90% de las consultas relevantes. Y para la comparación contra no tener skill, su ejemplo es claro: sin skill, 15 mensajes de ida y vuelta, 3 llamadas fallidas y 12,000 tokens; con skill, 2 preguntas de aclaración, cero fallos y 6,000 tokens.\&quot;\n\nAVANZA → trucos.\n\n\&quot;Un truco muy simple: pregúntenle al agente cuándo usaría su skill; les va a repetir la descripción y ahí ven qué le falta. Y si no quieren empezar desde cero, existe un skill llamado skill-creator que les ayuda a generar y revisar el suyo.\&quot;\n\nNOTA: Consejo de la guía: iterar sobre UNA tarea difícil hasta que el agente la resuelva, y luego convertir ese enfoque ganador en el skill.&quot;,
+      &quot;fragments&quot;: [
+        64.5,
+        65.5,
+        66.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s18-pokecli&quot;,
+      &quot;notes&quot;: &quot;[BLOQUE 4 · DEMO POKECLI ≈6 min]\n\n\&quot;Hace un tiempo di una charla interna en el trabajo sobre esto mismo. La idea conectó, pero la respuesta me dejó algo claro: necesitaba un ejemplo práctico que la gente pudiera revisar y reutilizar. Ese ejemplo es pokecli.\&quot;\n\n\&quot;Es un CLI en Python, con Typer, que consulta PokéAPI. Es sencillo a propósito: si entienden el patrón con Pokémon, lo pueden aplicar a su base de datos, a sus logs o a su API interna.\&quot;\n\n\&quot;Y fíjense en la instalación: pokecli install --skills no genera nada, copia el skill que ya viene dentro del paquete a la carpeta donde el agente lo espera. Nadie necesita clonar el repo, la herramienta instalada trae su propia capa para agentes.\&quot;\n\n\&quot;Por defecto lo instala para Claude Code en su carpeta personal. Con --agent kiro lo instala para Kiro, y con --local queda solo en el proyecto donde están parados.\&quot;&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s19-pokecli-skill&quot;,
+      &quot;notes&quot;: &quot;\&quot;Este es el SKILL.md real de pokecli, recortado para que quepa. Fíjense cómo se ven los cuatro pilares:\&quot; (AVANZA en cada color)\n\n1. \&quot;En azul, el empaquetado. Y una línea que importa más de lo que parece: allowed-tools: Bash(pokecli:*). Le dice al agente que este skill puede ejecutar pokecli y nada más. Un skill enfocado no es solo comodidad, también es un límite.\&quot;\n2. \&quot;En amarillo, el trigger: qué hace y cuándo usarlo, con las frases que diría un usuario de verdad, como Pokemon stats o type matchups.\&quot;\n3. \&quot;En verde, los ejemplos: una tabla de decisión que mapea la intención del usuario al comando exacto.\&quot;\n4. \&quot;Y en rojo, la gramática que hace la herramienta determinista: tres patrones, get, list y search, y un solo camino por comportamiento. Nada de alias que obliguen al agente a elegir.\&quot;\n\n\&quot;Y fíjense en el orden: el cuerpo del skill abre con la gramática completa. La guía lo recomienda así: lo crítico, arriba.\&quot;\n\n\&quot;Lo que más me sorprendió: escribir este archivo expuso los huecos de la herramienta. Cuando escribí una regla sobre el costo en tokens, quedó claro que pokecli no tenía un formato de salida que valiera la pena recomendar. Así que el formato TOON salió del skill, y no al revés.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        72.5,
+        73.5,
+        74.5,
+        75.5,
+        76.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s20-demo&quot;,
+      &quot;notes&quot;: &quot;GUION DE LA DEMO\n1. Muestra primero el CLI solo en la terminal: pokecli --help y pokecli get pokemon pikachu. Señala la salida TOON y las pistas help[] al final, que le sugieren al agente el siguiente comando. \&quot;Esto funciona sin IA. Es una herramienta normal.\&quot;\n2. Abre el agente y lanza el prompt 1. Señala el momento en que DECIDE usar el skill y corre pokecli get pokemon gengar y pokecli get type ghost.\n3. Prompt 2: el agente corre pokecli get pokemon dos veces y luego interpreta los resultados.\n4. Prompt 3: el agente combina get type, moves y can-learn para algo que el CLI no hace por sí solo.\nEXTRA (si hay tiempo): can-learn responde con el exit code, if pokecli can-learn charizard fly; then echo \&quot;sí\&quot;; fi\n\nSPEECH (durante la demo)\n\&quot;Fíjense: yo no le dije 'usa pokecli'. Le pregunté en lenguaje natural, leyó la descripción, decidió que este skill aplicaba, corrió el comando y me respondió con datos reales, no con lo que recuerda de su entrenamiento. Y en el tercer ejemplo pasa algo interesante: el CLI no sabe armar equipos. El agente sí. El agente decide. El script ejecuta.\&quot;\n\nPLAN B: Graba la demo en video por si falla el internet o la API. Ten capturas listas.&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s21-industria&quot;,
+      &quot;notes&quot;: &quot;[BLOQUE 5 · INDUSTRIA Y MCP vs CLI ≈5 min]\n\n\&quot;Y esto no es solo una opinión mía. Google lanzó un CLI para Workspace y deprecó su servidor MCP en favor de él. Microsoft, que tiene un MCP de Playwright muy popular, sacó también un CLI de Playwright.\&quot;\n\nAVANZA → gh / aws / gcloud.\n\n\&quot;¿Por qué empresas con recursos ilimitados harían esto? Porque los agentes son muy buenos usando la terminal, y un CLI le sirve al humano, al pipeline de CI y al agente al mismo tiempo.\&quot;\n\nENLACES\n- Google Workspace CLI: https://github.com/googleworkspace/cli\n- https://dev.to/gys/not-everything-needs-mcp-what-google-workspace-cli-taught-us-about-ai-agent-architecture-2doe\n- Playwright CLI: https://github.com/microsoft/playwright-cli\n- https://dev.to/aswani25/playwright-cli-vs-playwright-mcp-which-should-you-use-with-claude-code-1olh&quot;,
+      &quot;fragments&quot;: [
+        82.5,
+        83.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s22-mcp-vs-cli&quot;,
+      &quot;notes&quot;: &quot;\&quot;¿Esto significa que MCP murió? No.\&quot;\n\nAVANZA → analogía.\n\n\&quot;De hecho, la propia guía de Anthropic usa una analogía de cocina: MCP es la cocina profesional, la conectividad, lo que el agente puede hacer; el skill es la receta, el conocimiento de cómo debería hacerlo. Yo la extiendo un poco: MCP es una cocina industrial, muy potente, pero hay que montarla y mantenerla. Su CLI es la cocina de casa: ya la tienen, y para el día a día alcanza. Y las recetas, los skills, sirven en ambas cocinas.\&quot;\n\n\&quot;Ahora, MCP brilla cuando el agente no tiene una terminal, como una app web o un móvil, cuando necesitas OAuth para muchos usuarios, o cuando quieres gobernar centralmente qué puede hacer un agente en tu empresa. Pero para la mayoría de los casos del día a día de un equipo técnico (soporte, reportes, troubleshooting) un CLI con un skill es más simple, más barata en contexto y más flexible. No es uno contra otro; es escoger la herramienta correcta.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        85.5,
+        86.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s23-decision&quot;,
+      &quot;notes&quot;: &quot;(AVANZA una pregunta a la vez)\n\n\&quot;Mi regla práctica: si ya tienes el script y el agente corre donde hay una terminal, empieza con un CLI y un skill. Hoy mismo. Si después necesitas exponerlo a otros clientes, no tienes que elegir: puedes tener ambos. Y eso me lleva al caso de estudio.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        88.5,
+        89.5,
+        90.5,
+        91.5,
+        92.5,
+        93.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s24-banguat-soap&quot;,
+      &quot;notes&quot;: &quot;[BLOQUE 6 · CASO DE ESTUDIO BANGUAT ≈6 min]\n\n\&quot;Ahora un caso real y muy guatemalteco. El Banguat publica el tipo de cambio oficial en un servicio SOAP. Cualquiera que haya trabajado con sistemas del Estado lo reconoce al toque: SOAP puro, operaciones con nombre en español como TipoCambioDia o TipoCambioRango, y fechas en día, mes y año.\&quot;\n\n\&quot;Para los más jóvenes: SOAP es eso que ven en pantalla, XML envuelto en XML. Funciona, pero pídanle a un modelo que arme ese sobre a mano cada vez y van a ver cuántas veces se equivoca. Era el candidato perfecto para este patrón.\&quot;&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s25-arquitectura&quot;,
+      &quot;notes&quot;: &quot;\&quot;La decisión clave fue separar el core.\&quot;\n\nAVANZA → core. \&quot;Una sola librería en .NET que habla con el SOAP, parsea el XML y valida los datos. Envolví ese servicio una sola vez, bien.\&quot;\n\nAVANZA → adaptadores. \&quot;Encima, tres adaptadores delgados: un CLI con su skill para agentes con terminal y para humanos; un servidor MCP para clientes que no tienen shell; y una API REST versionada para que cualquier aplicación la consuma. REST y MCP quedan detrás de un gateway con YARP y límites por cliente, todo orquestado con Aspire. La lógica vive en un solo lugar: si el Banguat cambia algo, lo arreglo una vez.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        99.5,
+        100.5,
+        101.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s26-banguat-cli&quot;,
+      &quot;notes&quot;: &quot;\&quot;Así se ve el CLI. Comandos cortos, flags explícitos y salida en JSON cuando la necesitas. Por defecto pinta una tabla para el humano en la terminal, y con -o json se la pasa al agente sin que tenga que raspar bordes de tabla.\&quot;\n\n\&quot;El skill lo escribí en inglés, igual que el código, pero el trigger nombra lo que alguien de aquí diría: Banguat, Quetzal, GTQ.\&quot;\n\n\&quot;Y documenté los gotchas que me fui encontrando. Un rango sin publicaciones no es un error: regresa count 0, así que el skill le dice al agente que revise count y no solo el exit code. Los códigos de moneda del Banguat no son ISO 4217, por eso el skill trae un known-currencies.md generado del mismo catálogo que usa el CLI, y la regla es clara: nunca adivines un código. Ese conocimiento es lo que evita que el agente invente una respuesta.\&quot;\n\nNOTA: el skill se instala con banguat-exchangerates-cli skill install --scope local|user|both.&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s27-banguat-accion&quot;,
+      &quot;notes&quot;: &quot;\&quot;Le pregunto al agente a cuánto estuvo el dólar la semana pasada y el promedio. Él decide usar rate history, recibe datos oficiales y hace el cálculo. En ningún momento el agente ve SOAP ni XML: eso queda dentro del CLI.\&quot;\n\nAVANZA → lecciones.\n\n\&quot;Lo que aprendí: trabajar sobre tecnología vieja no tiene que salir caro si pones la frontera entre lo legacy y lo nuevo en el lugar correcto desde el principio. Empezar por el CLI me obligó a diseñar bien esa interfaz, y una vez que la interfaz era buena, agregar MCP y REST fue casi trivial.\&quot;\n\nNOTA: puedes sustituir el mock por una captura real de la conversación o hacer la mini demo en vivo.&quot;,
+      &quot;fragments&quot;: [
+        107.5,
+        108.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s28-tarea&quot;,
+      &quot;notes&quot;: &quot;[BLOQUE 7 · CIERRE ≈3 min]\n\n\&quot;Les dejo una tarea concreta. El lunes escojan un solo script, ese que corren cada semana. Sáquenle los valores quemados, agréguenle salida JSON, escriban una buena descripción, dos o tres ejemplos, y guárdenlo como SKILL.md. En una tarde tienen su primera herramienta AI-native. Sin servidores, sin frameworks.\&quot;\n\nAVANZA → pokecli.\n\n\&quot;Y si no tienen un script a mano, usen pokecli: el QR los lleva al repo. Instálenlo, jueguen con él en la terminal y escriban su propio skill sin ver el que trae. Después compárenlo con el original: ahí van a ver qué se les escapó.\&quot;&quot;,
+      &quot;fragments&quot;: [
+        110.5,
+        111.5
+      ]
+    },
+    {
+      &quot;sceneId&quot;: &quot;s29-mensaje&quot;,
+      &quot;notes&quot;: &quot;\&quot;¿Recuerdan la primera pregunta, sobre sentir que se quedaron atrás? Esos scripts que han escrito durante años, para apagar incendios y sacar reportes, son conocimiento operativo que ningún modelo trae de fábrica. Con un skill, ese conocimiento se vuelve algo que un agente puede usar de forma segura y repetible. No se quedaron atrás: ya tienen la ventaja. Solo falta enseñarle al agente a usarla.\&quot;&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s30-gracias&quot;,
+      &quot;notes&quot;: &quot;\&quot;Les dejo este QR a mi sitio, jonathanbucaro.com: ahí van a encontrar los repos, los enlaces que mencioné y la forma de contactarme. Muchas gracias. ¿Preguntas?\&quot;\n\n[PREGUNTAS 5–10 min]\n\nCHECKLIST DE PREPARACIÓN\n- Demo de PokeCLI grabada como respaldo\n- Link oficial a la guía de buenas prácticas de skills de Anthropic\n- Confirmar que el servicio SOAP de Banguat responde el día de la charla (o tener respuestas cacheadas)\n- Fuente de terminal grande (mín. 20 pt) y tema de alto contraste\n- Recursos publicados en jonathanbucaro.com y QR probado&quot;
+    },
+    {
+      &quot;sceneId&quot;: &quot;s31-organizadores&quot;,
+      &quot;notes&quot;: &quot;\&quot;Y antes de irnos, un agradecimiento a quienes organizan este evento: AWS User Group Guatemala, AWS Guatemala Girls Chapter y AWS User Group El Progreso. Este Community Day existe gracias a su trabajo voluntario.\&quot;\n\n\&quot;Si les gustó lo que vieron hoy, escaneen el QR y únanse a la comunidad. Ahí se enteran de los próximos meetups y es el mejor lugar para seguir esta conversación.\&quot;&quot;
+    }
+  ],
+  &quot;slideSequences&quot;: [
+    {
+      &quot;id&quot;: &quot;anexo-faq&quot;,
+      &quot;label&quot;: &quot;Preguntas probables&quot;,
+      &quot;slides&quot;: [
+        {
+          &quot;sceneId&quot;: &quot;a1-faq&quot;,
+          &quot;notes&quot;: &quot;Respuestas cortas para la sesión de preguntas. Usa \&quot;Atrás\&quot; para volver a la slide de cierre.&quot;
+        }
+      ]
+    },
+    {
+      &quot;id&quot;: &quot;anexo-checklist&quot;,
+      &quot;label&quot;: &quot;Checklist de calidad de un skill&quot;,
+      &quot;slides&quot;: [
+        {
+          &quot;sceneId&quot;: &quot;a2-checklist&quot;,
+          &quot;notes&quot;: &quot;Resumen de la guía de Anthropic; útil como respaldo o para el repo de recursos. Usa \&quot;Atrás\&quot; para volver a la slide de cierre.&quot;
+        }
+      ]
+    }
+  ]
+}
+    </script>
+    <div id=&quot;root&quot; data-composition-id=&quot;deck&quot; data-start=&quot;0&quot; data-duration=&quot;132&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+
+<div id=&quot;s01-portada&quot; class=&quot;scene band&quot; style=&quot;--block:#56b446;--block-ink:#7fd06f&quot; data-composition-id=&quot;s01-portada&quot; data-start=&quot;0&quot; data-duration=&quot;4&quot; data-label=&quot;Portada&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s01-portada-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 1 · Apertura</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <div class=&quot;row grow&quot; style=&quot;align-items:center;gap:80px&quot;>
+      <div class=&quot;col grow&quot; style=&quot;gap:44px&quot;>
+        <h1 class=&quot;title xl&quot; data-anim style=&quot;font-size:92px&quot;>Convierte tus Scripts y CLI en herramientas <span class=&quot;hl&quot;>AI-Native</span> usando SKILLs</h1>
+        <div data-anim style=&quot;font-size:40px;line-height:1.4&quot;><span style=&quot;display:block&quot;><b>Jonathan B&amp;uacute;caro</b><span class=&quot;muted&quot;> · Senior Software Engineer</span></span><span class=&quot;muted&quot; style=&quot;display:block&quot;>HTEC</span></div>
+      </div>
+      <div class=&quot;col&quot; style=&quot;width:640px;flex:none;gap:30px&quot;>
+        <div data-anim style=&quot;position:relative&quot;>
+          <div class=&quot;code &quot;  style=&quot;white-space:normal&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>~/scripts</span></div><pre style=&quot;white-space:pre-wrap;font-size:30px&quot;><span class=&quot;c-prompt&quot;>$</span> <span class=&quot;c-cmd&quot;>reporte</span> orders <span class=&quot;c-flag&quot;>--user-id</span> 4821 <span class=&quot;c-flag&quot;>--env</span> prod <span class=&quot;c-flag&quot;>--format</span> json <span class=&quot;cursor&quot;></span></pre></div>
+          <div style=&quot;position:absolute;right:-30px;bottom:-70px;width:104px;height:104px;border-radius:24px;background:var(--panel);border:2px solid var(--accent);padding:16px&quot;><svg viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#ed9515&quot; stroke-width=&quot;1.6&quot; stroke-linecap=&quot;round&quot;><rect x=&quot;4&quot; y=&quot;8&quot; width=&quot;16&quot; height=&quot;12&quot; rx=&quot;3&quot;/><path d=&quot;M12 8V4&quot;/><circle cx=&quot;12&quot; cy=&quot;3.2&quot; r=&quot;1&quot;/><circle cx=&quot;9&quot; cy=&quot;14&quot; r=&quot;1.3&quot; fill=&quot;#ed9515&quot;/><circle cx=&quot;15&quot; cy=&quot;14&quot; r=&quot;1.3&quot; fill=&quot;#ed9515&quot;/><path d=&quot;M2 13v3M22 13v3&quot;/></svg></div>
+        </div>
+        <div class=&quot;row&quot; data-anim style=&quot;gap:24px;align-items:center;margin-top:30px&quot;>
+          <img src=&quot;assets/img/qrcode_linkedin.png&quot; alt=&quot;QR a mi perfil de LinkedIn&quot; style=&quot;width:180px;height:180px;flex:none;display:block;border-radius:12px&quot;>
+          <div class=&quot;mono muted&quot; style=&quot;font-size:26px;line-height:1.5&quot;>linkedin.com/in/jonathanbucaro</div>
+        </div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>01 / 32</span><span class=&quot;fsep&quot;>·</span>AWS Community Day · Guatemala</div>
+  </div>
+</div>
+
+<div id=&quot;s01b-patrocinadores&quot; class=&quot;scene&quot; style=&quot;--block:#56b446;--block-ink:#7fd06f&quot; data-composition-id=&quot;s01b-patrocinadores&quot; data-start=&quot;4&quot; data-duration=&quot;4&quot; data-label=&quot;Patrocinadores&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s01b-patrocinadores-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 1 · Patrocinadores</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Gracias a nuestros <span class=&quot;hl&quot;>patrocinadores</span></h1>
+    <img data-anim src=&quot;assets/img/sponsors-logos.png&quot; alt=&quot;Patrocinadores: Universidad Landívar, AWS, Banco Industrial, JetBrains, GBM, proticket.io, HTEC e Improving&quot; style=&quot;width:1500px;height:auto;display:block;align-self:center;mix-blend-mode:lighten&quot;>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>02 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s02-fomo&quot; class=&quot;scene&quot; style=&quot;--block:#56b446;--block-ink:#7fd06f&quot; data-composition-id=&quot;s02-fomo&quot; data-start=&quot;8&quot; data-duration=&quot;4&quot; data-label=&quot;Pregunta #1: el FOMO&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s02-fomo-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 1 · Pregunta #1</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <div style=&quot;position:absolute;inset:0;pointer-events:none&quot; aria-hidden=&quot;true&quot; data-layout-allow-overlap>
+      <span class=&quot;mono&quot; style=&quot;position:absolute;left:210px;top:250px;transform:rotate(-6deg);font-size:44px;color:var(--muted);opacity:0.22;filter:blur(3px)&quot;>MCP</span><span class=&quot;mono&quot; style=&quot;position:absolute;left:1460px;top:220px;transform:rotate(5deg);font-size:44px;color:var(--muted);opacity:0.22;filter:blur(3px)&quot;>A2A</span><span class=&quot;mono&quot; style=&quot;position:absolute;left:260px;top:760px;transform:rotate(4deg);font-size:44px;color:var(--muted);opacity:0.22;filter:blur(3px)&quot;>LangGraph</span><span class=&quot;mono&quot; style=&quot;position:absolute;left:1380px;top:700px;transform:rotate(-4deg);font-size:44px;color:var(--muted);opacity:0.22;filter:blur(3px)&quot;>CrewAI</span><span class=&quot;mono&quot; style=&quot;position:absolute;left:820px;top:200px;transform:rotate(3deg);font-size:44px;color:var(--muted);opacity:0.22;filter:blur(3px)&quot;>agentic</span><span class=&quot;mono&quot; style=&quot;position:absolute;left:1180px;top:850px;transform:rotate(-3deg);font-size:44px;color:var(--muted);opacity:0.22;filter:blur(3px)&quot;>AutoGen</span><span class=&quot;mono&quot; style=&quot;position:absolute;left:470px;top:140px;transform:rotate(2deg);font-size:44px;color:var(--muted);opacity:0.22;filter:blur(3px)&quot;>Agent SDK</span><span class=&quot;mono&quot; style=&quot;position:absolute;left:900px;top:820px;transform:rotate(-2deg);font-size:44px;color:var(--muted);opacity:0.22;filter:blur(3px)&quot;>multi-agent</span>
+    </div>
+    <div class=&quot;col grow center&quot; style=&quot;text-align:center;position:relative&quot;>
+      <h1 class=&quot;title&quot; data-anim style=&quot;font-size:80px;max-width:1500px&quot;>¿Quién ha sentido que, si no está construyendo un <span class=&quot;hl&quot;>servidor MCP</span> o usando un <span class=&quot;hl&quot;>Agent Framework</span> gigante, ya se quedó atrás?</h1>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>03 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s03-realidad&quot; class=&quot;scene&quot; style=&quot;--block:#56b446;--block-ink:#7fd06f&quot; data-composition-id=&quot;s03-realidad&quot; data-start=&quot;12&quot; data-duration=&quot;3&quot; data-label=&quot;Pregunta #2: el día a día&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s03-realidad-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 1 · Pregunta #2</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <div class=&quot;row&quot; style=&quot;gap:36px;margin-top:20px&quot;>
+      <div class=&quot;card grow&quot; data-anim><svg class=&quot;icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#ff6b6b&quot; stroke-width=&quot;1.8&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><path d=&quot;M12 22c4 0 7-2.7 7-7 0-3.5-2.2-6-4-8-.4 2.2-1.6 3.6-3 4 0-3-1-6.5-4-9 .3 3.5-1.5 5.8-3 7.6C3.8 11.2 5 13 5 15c0 4.3 3 7 7 7z&quot;/></svg><h3>Producción cayó</h3></div>
+      <div class=&quot;card grow&quot; data-anim><svg class=&quot;icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#ed9515&quot; stroke-width=&quot;1.8&quot;><circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;9&quot;/><circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;4&quot;/><path d=&quot;M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6&quot;/></svg><h3>Soporte urgente</h3></div>
+      <div class=&quot;card grow&quot; data-anim><svg class=&quot;icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#6daddd&quot; stroke-width=&quot;1.8&quot; stroke-linecap=&quot;round&quot;><path d=&quot;M4 20h16&quot;/><path d=&quot;M7 16v-5M12 16V6M17 16v-8&quot;/></svg><h3>Reporte que la plataforma no genera</h3></div>
+    </div>
+    <h1 class=&quot;title&quot; data-anim style=&quot;font-size:84px;margin-top:20px&quot;>¿Qué es lo <span class=&quot;hl&quot;>primero</span> que hacemos?</h1>
+    <div class=&quot;row&quot; data-step=&quot;1&quot; style=&quot;gap:20px;flex-wrap:wrap;align-items:center&quot;>
+      <span class=&quot;chip&quot;>$ tail -f app.log</span><span class=&quot;chip&quot;>abro la consola</span><span class=&quot;chip&quot;>corro un query</span><span class=&quot;chip&quot;>armo un script</span>
+      <span style=&quot;font-size:36px;color:var(--muted);margin-left:10px&quot;>… nadie dice <i>“voy a construir un MCP”</i>.</span>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>04 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s04-antipatron&quot; class=&quot;scene&quot; style=&quot;--block:#56b446;--block-ink:#7fd06f&quot; data-composition-id=&quot;s04-antipatron&quot; data-start=&quot;15&quot; data-duration=&quot;3&quot; data-label=&quot;El anti-patrón&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s04-antipatron-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 1 · Lo que hacemos hoy</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Le pedimos al modelo que <span class=&quot;hl&quot;>calcule</span> lo que debería estar <span class=&quot;hl&quot;>programado</span></h1>
+    <div class=&quot;flow even&quot; data-anim style=&quot;margin-top:30px&quot;>
+      <div class=&quot;node&quot;>Humano<small>copia / pega logs</small></div><span class=&quot;arrow&quot;>→</span>
+      <div class=&quot;node&quot;>Chat IA<small>CSV a medias</small></div><span class=&quot;arrow&quot;>→</span>
+      <div class=&quot;node&quot; style=&quot;font-style:italic&quot;>“Creo que el error es…”</div><span class=&quot;arrow&quot;>→</span>
+      <div class=&quot;node&quot;>Humano verifica<small>¿será cierto?</small></div><span class=&quot;arrow&quot;>↺</span>
+      <div class=&quot;node&quot; style=&quot;border-style:dashed&quot;>repite</div>
+    </div>
+    <div class=&quot;row&quot; data-step=&quot;1&quot; style=&quot;gap:24px;flex-wrap:wrap;margin-top:30px&quot;>
+      <span class=&quot;tag bad&quot;>no determinista</span><span class=&quot;tag bad&quot;>contexto incompleto</span><span class=&quot;tag bad&quot;>alucinaciones</span><span class=&quot;tag bad&quot;>no repetible</span>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>05 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s05-idea&quot; class=&quot;scene&quot; style=&quot;--block:#56b446;--block-ink:#7fd06f&quot; data-composition-id=&quot;s05-idea&quot; data-start=&quot;18&quot; data-duration=&quot;4&quot; data-label=&quot;La idea central&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s05-idea-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 1 · La idea central</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title xl&quot; data-anim>El agente <span class=&quot;hl&quot;>decide</span>.<br>El script <span class=&quot;hl&quot;>ejecuta</span>.</h1>
+    <div class=&quot;flow&quot; data-step=&quot;1&quot; style=&quot;margin-top:20px&quot;>
+      <div class=&quot;node&quot; style=&quot;border-color:var(--accent)&quot;>Agente<small>decide qué y cuándo</small></div><span class=&quot;arrow&quot;>→</span>
+      <div class=&quot;node&quot;>CLI determinista<small>hace el trabajo</small></div><span class=&quot;arrow&quot;>→</span>
+      <div class=&quot;node&quot;>salida estructurada<small>{ &quot;format&quot;: &quot;json | toon&quot; }</small></div><span class=&quot;arrow&quot;>→</span>
+      <div class=&quot;node&quot; style=&quot;border-color:var(--accent)&quot;>Agente<small>interpreta y responde</small></div>
+    </div>
+    <div data-step=&quot;2&quot; class=&quot;lead&quot; style=&quot;margin-top:10px&quot;><code>SKILL.md</code> = el manual que conecta ambos. Sin servidores, sin infraestructura nueva.</div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>06 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s06-pilares&quot; class=&quot;scene&quot; style=&quot;--block:#9c5a98;--block-ink:#cf96cb&quot; data-composition-id=&quot;s06-pilares&quot; data-start=&quot;22&quot; data-duration=&quot;6&quot; data-label=&quot;Los 4 pilares&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s06-pilares-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 2 · Los 4 pilares</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Cuatro pasos para volver tu script <span class=&quot;hl&quot;>AI-native</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:30px;margin-top:10px;align-items:stretch&quot;>
+      <div class=&quot;card grow&quot; data-step=&quot;1&quot;><svg class=&quot;icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#ed9515&quot; stroke-width=&quot;1.8&quot; stroke-linecap=&quot;round&quot;><rect x=&quot;5&quot; y=&quot;11&quot; width=&quot;14&quot; height=&quot;10&quot; rx=&quot;2&quot;/><path d=&quot;M8 11V7a4 4 0 0 1 8 0v4&quot;/></svg><span class=&quot;num&quot;>01</span><h3>Hazla determinista</h3><p>Valores fijos</p><p>→ flags explícitos</p><div class=&quot;row&quot; style=&quot;gap:10px;flex-wrap:wrap;margin-top:12px&quot;><span class=&quot;chip&quot; style=&quot;font-size:24px;padding:8px 14px;color:var(--accent)&quot;>--user-id</span><span class=&quot;chip&quot; style=&quot;font-size:24px;padding:8px 14px;color:var(--accent)&quot;>--env</span></div></div>
+      <div class=&quot;card grow&quot; data-step=&quot;2&quot;><svg class=&quot;icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#ed9515&quot; stroke-width=&quot;1.8&quot;><circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;9&quot;/><circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;5&quot;/><circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;1.5&quot; fill=&quot;#ed9515&quot;/></svg><span class=&quot;num&quot;>02</span><h3>Define el trigger semántico</h3><p>Cuándo debe ser invocada</p></div>
+      <div class=&quot;card grow&quot; data-step=&quot;3&quot;><svg class=&quot;icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#ed9515&quot; stroke-width=&quot;1.8&quot; stroke-linejoin=&quot;round&quot;><path d=&quot;M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z&quot;/><path d=&quot;M9 4v14M15 6v14&quot;/></svg><span class=&quot;num&quot;>03</span><h3>Muéstrale el camino</h3><p>Ejemplos de comandos y salidas esperadas</p></div>
+      <div class=&quot;card grow&quot; data-step=&quot;4&quot;><svg class=&quot;icon&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#ed9515&quot; stroke-width=&quot;1.8&quot; stroke-linejoin=&quot;round&quot;><path d=&quot;M3 7l9-4 9 4-9 4z&quot;/><path d=&quot;M3 7v10l9 4 9-4V7M12 11v10&quot;/></svg><span class=&quot;num&quot;>04</span><h3>Empaqueta en SKILL.md</h3><p>El archivo que el agente carga en contexto</p></div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>07 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s07-antes-despues&quot; class=&quot;scene&quot; style=&quot;--block:#9c5a98;--block-ink:#cf96cb&quot; data-composition-id=&quot;s07-antes-despues&quot; data-start=&quot;28&quot; data-duration=&quot;3&quot; data-label=&quot;Antes y después&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s07-antes-despues-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 2 · Antes y después</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>El mismo script, ahora como <span class=&quot;hl&quot;>herramienta</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:40px;align-items:stretch&quot;>
+      <div class=&quot;col grow&quot; data-anim data-dim=&quot;1&quot;>
+        <span class=&quot;tag bad&quot; style=&quot;align-self:flex-start&quot;>ANTES · valores quemados</span>
+        <div class=&quot;code grow&quot;  style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>reporte.py</span></div><pre><span class=&quot;c-com&quot;># reporte.py</span>
+conn = connect(<span class=&quot;c-str&quot;>&quot;prod-db.internal&quot;</span>)
+rows = query(&quot;<span class=&quot;c-kw&quot;>SELECT</span> * <span class=&quot;c-kw&quot;>FROM</span> orders
+              <span class=&quot;c-kw&quot;>WHERE</span> user_id = <span class=&quot;c-num&quot;>4821</span>&quot;)
+print(rows)</pre></div>
+      </div>
+      <div class=&quot;col grow&quot; data-step=&quot;1&quot;>
+        <span class=&quot;tag ok&quot; style=&quot;align-self:flex-start&quot;>DESPUÉS · todo explícito</span>
+        <div class=&quot;code grow lg&quot;  style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>terminal</span></div><pre><span class=&quot;c-prompt&quot;>$</span> <span class=&quot;c-cmd&quot;>reporte</span> orders \
+    <span class=&quot;c-flag&quot;>--user-id</span> 4821 \
+    <span class=&quot;c-flag&quot;>--env</span> prod \
+    <span class=&quot;c-flag&quot;>--format</span> json</pre></div>
+      </div>
+    </div>
+    <div class=&quot;lead&quot; data-step=&quot;1&quot;>Parámetros, ambiente y formato de salida explícitos: <b style=&quot;color:var(--ink)&quot;>el 80% del trabajo.</b></div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>08 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s10-casos-uso&quot; class=&quot;scene&quot; style=&quot;--block:#0ba5bf;--block-ink:#3fc6dc&quot; data-composition-id=&quot;s10-casos-uso&quot; data-start=&quot;31&quot; data-duration=&quot;4&quot; data-label=&quot;Empieza por 2–3 casos de uso&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s10-casos-uso-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 3 · Antes de empezar</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Antes de escribir código: <span class=&quot;hl&quot;>2–3 casos de uso</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:44px;align-items:stretch&quot;>
+      <div class=&quot;code grow&quot; data-anim style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>caso-de-uso.txt</span></div><pre><span class=&quot;c-key&quot;>Caso de uso:</span> Reporte de órdenes por cliente
+<span class=&quot;c-key&quot;>Trigger:</span>     <span class=&quot;c-str&quot;>&quot;¿cuántas órdenes tuvo el cliente X?&quot;</span>
+             <span class=&quot;c-str&quot;>&quot;reporte de ventas del mes&quot;</span>
+<span class=&quot;c-key&quot;>Pasos:</span>       1. reporte orders <span class=&quot;c-flag&quot;>--user-id</span> X
+                  <span class=&quot;c-flag&quot;>--from</span> ... <span class=&quot;c-flag&quot;>--format</span> json
+             2. Calcular totales / comparar periodos
+<span class=&quot;c-key&quot;>Resultado:</span>   Cifras reales + el comando usado</pre></div>
+      <div class=&quot;col&quot; data-anim style=&quot;width:560px;flex:none;gap:24px&quot;>
+        <div class=&quot;mono muted&quot; style=&quot;font-size:26px;letter-spacing:0.12em&quot;>PREGUNTAS GUÍA</div>
+        <div class=&quot;card&quot; style=&quot;padding:26px 32px&quot;><p style=&quot;color:var(--ink)&quot;>¿Qué quiere lograr el usuario?</p></div>
+        <div class=&quot;card&quot; style=&quot;padding:26px 32px&quot;><p style=&quot;color:var(--ink)&quot;>¿Qué pasos requiere?</p></div>
+        <div class=&quot;card&quot; style=&quot;padding:26px 32px&quot;><p style=&quot;color:var(--ink)&quot;>¿Qué conocimiento del dominio hay que incluir?</p></div>
+      </div>
+    </div>
+    <div class=&quot;lead&quot; data-anim style=&quot;font-size:34px&quot;>Los parámetros → <b style=&quot;color:var(--accent)&quot;>flags</b>. Las frases del usuario → <b style=&quot;color:var(--accent)&quot;>trigger</b>. Los pasos → <b style=&quot;color:var(--accent)&quot;>ejemplos</b>.</div>
+    <div class=&quot;mono muted&quot; data-anim style=&quot;font-size:26px&quot;>Un skill para tu CLI es tool-first: la herramienta ya existe, el skill aporta la experiencia.</div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>09 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s08-determinista&quot; class=&quot;scene&quot; style=&quot;--block:#0ba5bf;--block-ink:#3fc6dc&quot; data-composition-id=&quot;s08-determinista&quot; data-start=&quot;35&quot; data-duration=&quot;3&quot; data-label=&quot;Pilar 1: principios&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s08-determinista-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 3 · Pilar 1 · Hazla determinista</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Un CLI bueno para un agente es un CLI bueno para un <span class=&quot;hl&quot;>pipeline</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:60px&quot;>
+      <div class=&quot;list grow&quot; data-anim>
+        <div class=&quot;li&quot;><span class=&quot;b&quot;>✓</span><span>Todo valor variable es un argumento o flag</span></div>
+        <div class=&quot;li&quot;><span class=&quot;b&quot;>✓</span><span>Errores accionables: dicen qué valores acepta</span></div>
+        <div class=&quot;li&quot;><span class=&quot;b&quot;>✓</span><span>Salida estructurada: <code>--format json|table|csv</code></span></div>
+        <div class=&quot;li&quot;><span class=&quot;b&quot;>✓</span><span><b>stdout</b> para datos, <b>stderr</b> para logs y errores</span></div>
+        <div class=&quot;li&quot;><span class=&quot;b&quot;>✓</span><span>Exit codes: <code>0</code> ok · <code>1</code> error · <code>2</code> uso incorrecto</span></div>
+      </div>
+      <div class=&quot;col&quot; style=&quot;width:640px;flex:none;gap:28px&quot;>
+        <div class=&quot;card accent&quot; data-step=&quot;1&quot;><h3>No interactiva</h3><p>Nada de prompts que esperen input: el agente se queda colgado.</p></div>
+        <div class=&quot;card accent&quot; data-step=&quot;1&quot;><h3><code style=&quot;font-size:1em&quot;>--dry-run</code> / <code style=&quot;font-size:1em&quot;>--yes</code></h3><p>Para todo lo que borre o modifique. Nada de DELETE en prod por un malentendido.</p></div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>10 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s09-herramientas&quot; class=&quot;scene&quot; style=&quot;--block:#0ba5bf;--block-ink:#3fc6dc&quot; data-composition-id=&quot;s09-herramientas&quot; data-start=&quot;38&quot; data-duration=&quot;4&quot; data-label=&quot;Pilar 1: herramientas&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s09-herramientas-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 3 · Pilar 1 · Herramientas</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>No escribas el parsing a mano</h1>
+    <div class=&quot;row&quot; style=&quot;gap:36px;align-items:stretch&quot;>
+      <div class=&quot;card grow&quot; data-anim style=&quot;padding:30px 36px&quot;>
+        <div class=&quot;mono&quot; style=&quot;font-size:30px;color:var(--sky);font-weight:700;margin-bottom:18px&quot;>PYTHON</div>
+        <div class=&quot;list&quot; style=&quot;gap:12px;font-size:32px;line-height:1.3&quot;>
+          <div><b>Typer</b><span class=&quot;muted&quot;>: CLIs con type hints, mínimo código</span></div>
+          <div><b>Click</b><span class=&quot;muted&quot;>: maduro, composable</span></div>
+          <div><b>argparse</b><span class=&quot;muted&quot;>: stdlib, cero dependencias</span></div>
+          <div><b>Rich</b><span class=&quot;muted&quot;>: tablas bonitas para humanos</span></div>
+          <div style=&quot;margin-top:6px&quot;><div class=&quot;muted&quot; style=&quot;font-size:22px;text-transform:uppercase;letter-spacing:0.08em&quot;>Distribuye tu CLI</div><div class=&quot;mono&quot; style=&quot;font-size:26px;color:var(--accent)&quot;>uvx mi-cli<br>uv tool install mi-cli</div></div>
+        </div>
+      </div>
+      <div class=&quot;card grow&quot; data-anim style=&quot;padding:30px 36px&quot;>
+        <div class=&quot;mono&quot; style=&quot;font-size:30px;color:var(--green);font-weight:700;margin-bottom:18px&quot;>NODE.JS</div>
+        <div class=&quot;list&quot; style=&quot;gap:12px;font-size:32px;line-height:1.3&quot;>
+          <div><b>Commander.js</b><span class=&quot;muted&quot;>: el estándar, simple</span></div>
+          <div><b>yargs</b><span class=&quot;muted&quot;>: parsing potente</span></div>
+          <div><b>oclif</b><span class=&quot;muted&quot;>: CLIs grandes (Heroku/Salesforce)</span></div>
+          <div><b>Ink</b><span class=&quot;muted&quot;>: UIs de terminal con React</span></div>
+          <div style=&quot;margin-top:6px&quot;><div class=&quot;muted&quot; style=&quot;font-size:22px;text-transform:uppercase;letter-spacing:0.08em&quot;>Distribuye tu CLI</div><div class=&quot;mono&quot; style=&quot;font-size:26px;color:var(--accent)&quot;>npx mi-cli<br>npm i -g mi-cli</div></div>
+        </div>
+      </div>
+      <div class=&quot;col&quot; data-anim style=&quot;width:600px;flex:none&quot;>
+        <div class=&quot;code sm grow&quot;  style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>reporte.py · Typer</span></div><pre><span class=&quot;c-cmd&quot;>@app.command()</span>
+<span class=&quot;c-kw&quot;>def</span> orders(
+    user_id: int,
+    env: str = <span class=&quot;c-str&quot;>&quot;dev&quot;</span>,
+    format: str = <span class=&quot;c-str&quot;>&quot;table&quot;</span>,
+):
+    ...</pre></div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>11 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s11-trigger&quot; class=&quot;scene&quot; style=&quot;--block:#0ba5bf;--block-ink:#3fc6dc&quot; data-composition-id=&quot;s11-trigger&quot; data-start=&quot;42&quot; data-duration=&quot;3&quot; data-label=&quot;Pilar 2: el trigger semántico&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s11-trigger-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 3 · Pilar 2 · Trigger semántico</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title xl&quot; data-anim style=&quot;font-size:88px&quot;>El agente no lee tu código.<br>Lee tu <span class=&quot;hl mono&quot; style=&quot;font-size:0.9em&quot;>description</span>.</h1>
+    <div class=&quot;col&quot; style=&quot;gap:26px;margin-top:10px&quot;>
+      <div class=&quot;card red&quot; data-anim style=&quot;padding:28px 36px&quot;><div class=&quot;mono&quot; style=&quot;font-size:32px&quot;><span class=&quot;bad&quot;>✗ </span><span class=&quot;c-key&quot;>description:</span> Herramienta de reportes.</div></div>
+      <div class=&quot;card green&quot; data-step=&quot;1&quot; style=&quot;padding:28px 36px&quot;><div class=&quot;mono&quot; style=&quot;font-size:31px;line-height:1.5&quot;><span class=&quot;ok&quot;>✓ </span><span class=&quot;c-key&quot;>description:</span> Genera reportes de órdenes, ventas y usuarios desde la base de datos de la plataforma. <span style=&quot;color:var(--accent)&quot;>Úsala cuando el usuario pida métricas, reportes, totales por fecha o información de un cliente específico</span> que la plataforma no muestra.</div></div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>12 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s12-frontmatter&quot; class=&quot;scene&quot; style=&quot;--block:#0ba5bf;--block-ink:#3fc6dc&quot; data-composition-id=&quot;s12-frontmatter&quot; data-start=&quot;45&quot; data-duration=&quot;3&quot; data-label=&quot;Pilar 2: reglas del frontmatter&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s12-frontmatter-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 3 · Pilar 2 · Guía de Anthropic</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>El SEO de tu herramienta, pero para un <span class=&quot;hl&quot;>agente</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:50px&quot;>
+      <div class=&quot;list grow&quot; data-anim style=&quot;gap:20px&quot;>
+        <div class=&quot;li&quot; style=&quot;font-size:34px&quot;><span class=&quot;b&quot; style=&quot;color:var(--accent)&quot;>→</span><span><b>[Qué hace] + [Cuándo usarla] + [Capacidades clave]</b></span></div>
+        <div class=&quot;li&quot; style=&quot;font-size:34px&quot;><span class=&quot;b&quot; style=&quot;color:var(--accent)&quot;>→</span><span>Frases que el usuario realmente diría (y tipos de archivo)</span></div>
+        <div class=&quot;li&quot; style=&quot;font-size:34px&quot;><span class=&quot;b&quot; style=&quot;color:var(--accent)&quot;>→</span><span>Máx. <b>1024 caracteres</b>, sin <code>&amp;lt;</code> ni <code>&amp;gt;</code>, va al system prompt</span></div>
+        <div class=&quot;li&quot; style=&quot;font-size:34px&quot;><span class=&quot;b&quot; style=&quot;color:var(--accent)&quot;>→</span><span><code>name</code> en kebab-case = nombre de la carpeta; sin “claude” ni “anthropic”</span></div>
+        <div class=&quot;li&quot; style=&quot;font-size:34px&quot;><span class=&quot;b&quot; style=&quot;color:var(--accent)&quot;>→</span><span><b>Negative triggers:</b> <i>“NO usar para consultas generales de finanzas”</i></span></div>
+      </div>
+      <div class=&quot;col&quot; style=&quot;width:520px;flex:none;gap:22px&quot;>
+        <div class=&quot;col&quot; data-anim style=&quot;gap:16px;align-items:center&quot;>
+          <img src=&quot;assets/img/qrcode_resources.anthropic.com.png&quot; alt=&quot;QR a The Complete Guide to Building Skills for Claude&quot; style=&quot;width:230px;height:230px;display:block;border-radius:12px&quot;>
+          <div class=&quot;mono muted&quot; style=&quot;font-size:22px;text-align:center&quot;><span style=&quot;display:block&quot;>The Complete Guide to</span><span style=&quot;display:block&quot;>Building Skills for Claude</span></div>
+        </div>
+      </div>
+    </div>
+    <div class=&quot;row&quot; data-step=&quot;1&quot; style=&quot;gap:24px&quot;>
+      <div class=&quot;card red grow&quot; style=&quot;padding:22px 30px&quot;><p><span class=&quot;bad mono&quot;>✗ vaga</span> <span style=&quot;color:var(--ink)&quot;>“Helps with projects.”</span></p></div>
+      <div class=&quot;card red grow&quot; style=&quot;padding:22px 30px&quot;><p><span class=&quot;bad mono&quot;>✗ técnica, sin triggers</span> <span style=&quot;color:var(--ink)&quot;>“Implements the Project entity model…”</span></p></div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>13 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s13-ejemplos&quot; class=&quot;scene&quot; style=&quot;--block:#0ba5bf;--block-ink:#3fc6dc&quot; data-composition-id=&quot;s13-ejemplos&quot; data-start=&quot;48&quot; data-duration=&quot;4&quot; data-label=&quot;Pilar 3: muéstrale el camino&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s13-ejemplos-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 3 · Pilar 3 · Muéstrale el camino</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Muéstrale el camino con <span class=&quot;hl&quot;>ejemplos</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:60px;align-items:center&quot;>
+      <div class=&quot;col&quot; data-anim style=&quot;width:520px;flex:none;gap:0;align-items:stretch&quot;>
+        <div class=&quot;node&quot; style=&quot;text-align:left&quot;><b>1 · Petición</b><small>lo que diría el usuario</small></div>
+        <span class=&quot;arrow&quot; style=&quot;text-align:center;padding:10px 0&quot;>↓</span>
+        <div class=&quot;node&quot; style=&quot;text-align:left&quot;><b>2 · Comando</b><small>exacto, con sus flags</small></div>
+        <span class=&quot;arrow&quot; style=&quot;text-align:center;padding:10px 0&quot;>↓</span>
+        <div class=&quot;node&quot; style=&quot;text-align:left;border-color:var(--accent)&quot;><b>3 · Salida esperada</b><small>para notar cuando algo falla</small></div>
+      </div>
+      <div class=&quot;code sm grow&quot; data-anim style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>orders-report/SKILL.md</span></div><pre><span class=&quot;c-head&quot;>## Ejemplos</span>
+
+<span class=&quot;c-bold&quot;>**Usuario:**</span> &quot;¿Cuántas órdenes tuvo
+el cliente 4821 este mes?&quot;
+
+<span class=&quot;c-fm&quot;>```bash</span>
+reporte orders --user-id 4821 \
+  --from 2026-09-01 --format json
+<span class=&quot;c-fm&quot;>```</span>
+<span class=&quot;c-bold&quot;>**Salida esperada:**</span>
+<span class=&quot;c-fm&quot;>```json</span>
+{&quot;user_id&quot;: 4821, &quot;total_orders&quot;: 12,
+ &quot;total_amount&quot;: 3450.00}
+<span class=&quot;c-fm&quot;>```</span></pre></div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>14 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s14-troubleshooting&quot; class=&quot;scene&quot; style=&quot;--block:#0ba5bf;--block-ink:#3fc6dc&quot; data-composition-id=&quot;s14-troubleshooting&quot; data-start=&quot;52&quot; data-duration=&quot;3&quot; data-label=&quot;Pilar 3: errores y gotchas&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s14-troubleshooting-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 3 · Pilar 3 · El camino triste</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Documenta el camino triste: <span class=&quot;hl&quot; style=&quot;display:block&quot;>Error → Causa → Solución</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:40px;align-items:stretch&quot;>
+      <div class=&quot;code grow&quot; data-anim style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>SKILL.md</span></div><pre><span class=&quot;c-head&quot;>## Troubleshooting</span>
+<span class=&quot;c-bold&quot;>**Error:**</span> exit 2, &quot;user not found&quot;
+<span class=&quot;c-bold&quot;>**Causa:**</span> el ID no existe en ese ambiente
+<span class=&quot;c-bold&quot;>**Solución:**</span> confirmar el ID con el
+  usuario y el --env usado</pre></div>
+      <div class=&quot;col&quot; data-anim style=&quot;width:700px;flex:none;gap:22px&quot;>
+        <div class=&quot;mono muted&quot; style=&quot;font-size:24px;letter-spacing:0.12em&quot;>INSTRUCCIONES ESPECÍFICAS Y ACCIONABLES</div>
+        <div class=&quot;card red&quot; style=&quot;padding:24px 30px&quot;><p><span class=&quot;bad&quot;>✗</span> “Valida los datos antes de continuar”</p></div>
+        <div class=&quot;card green&quot; style=&quot;padding:24px 30px&quot;><p style=&quot;color:var(--ink)&quot;><span class=&quot;ok&quot;>✓</span> Corre <code>reporte validate --input archivo.csv</code>. Si falla: fechas en YYYY-MM-DD, campos obligatorios presentes</p></div>
+      </div>
+    </div>
+    <div class=&quot;quote&quot; data-step=&quot;1&quot;>“Code is deterministic; language interpretation isn't.”<div class=&quot;mono muted&quot; style=&quot;font-size:24px;font-weight:400;margin-top:12px;letter-spacing:0.08em&quot;>THE COMPLETE GUIDE TO BUILDING SKILLS FOR CLAUDE</div></div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>15 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s15-anatomia&quot; class=&quot;scene&quot; style=&quot;--block:#0ba5bf;--block-ink:#3fc6dc&quot; data-composition-id=&quot;s15-anatomia&quot; data-start=&quot;55&quot; data-duration=&quot;3&quot; data-label=&quot;Pilar 4: anatomía de un skill&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s15-anatomia-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 3 · Pilar 4 · Empaqueta en SKILL.md</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim style=&quot;font-size:64px&quot;>Un skill es una <span class=&quot;hl&quot;>carpeta</span> con un <span class=&quot;hl&quot;>SKILL.md</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:32px;align-items:stretch&quot;>
+      <div class=&quot;code sm grow&quot; data-anim style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>árbol</span></div><pre>.claude/skills/       <span class=&quot;c-com&quot;># o .kiro/skills/</span>
+<span class=&quot;c-fm&quot;>└──</span> orders-report/
+    <span class=&quot;c-fm&quot;>├──</span> SKILL.md      <span class=&quot;c-com&quot;># obligatorio</span>
+    <span class=&quot;c-fm&quot;>├──</span> scripts/      <span class=&quot;c-com&quot;># tu CLI / wrappers</span>
+    <span class=&quot;c-fm&quot;>├──</span> references/   <span class=&quot;c-com&quot;># docs bajo demanda</span>
+    <span class=&quot;c-fm&quot;>└──</span> assets/       <span class=&quot;c-com&quot;># plantillas, schemas</span>
+
+<span class=&quot;c-com&quot;># proyecto: ./.claude/skills · ./.kiro/skills</span>
+<span class=&quot;c-com&quot;># usuario:  ~/.claude/skills · ~/.kiro/skills</span></pre></div>
+      <div class=&quot;code sm&quot; data-anim style=&quot;width:560px;flex:none&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>SKILL.md</span></div><pre><span class=&quot;c-fm&quot;>---</span>
+<span class=&quot;c-key&quot;>name</span>: orders-report
+<span class=&quot;c-key&quot;>description</span>: Genera reportes de
+  órdenes... Úsala cuando...
+<span class=&quot;c-fm&quot;>---</span>
+<span class=&quot;c-head&quot;># Orders Report</span>
+<span class=&quot;c-head&quot;>## Cuándo usarla</span>
+<span class=&quot;c-head&quot;>## Comandos disponibles</span>
+<span class=&quot;c-head&quot;>## Ejemplos</span>
+<span class=&quot;c-head&quot;>## Troubleshooting</span></pre></div>
+    </div>
+    <div class=&quot;row&quot; data-step=&quot;1&quot; style=&quot;gap:24px;align-items:stretch&quot;>
+      <div class=&quot;card red grow&quot; style=&quot;padding:22px 28px&quot;><p style=&quot;font-size:30px;color:var(--ink)&quot;>Exactamente <code>SKILL.md</code> <span class=&quot;muted&quot;>(skill.md ✗)</span></p></div>
+      <div class=&quot;card red grow&quot; style=&quot;padding:22px 28px&quot;><p style=&quot;font-size:30px;color:var(--ink)&quot;><code>orders-report</code> ✓ <span class=&quot;muted&quot;>· Orders Report ✗ · orders_report ✗</span></p></div>
+      <div class=&quot;card red grow&quot; style=&quot;padding:22px 28px&quot;><p style=&quot;font-size:30px;color:var(--ink)&quot;>Sin <code>README.md</code> dentro <span class=&quot;muted&quot;>(va en la raíz del repo)</span></p></div>
+    </div>
+    <div class=&quot;mono muted&quot; data-step=&quot;1&quot; style=&quot;font-size:26px;margin-top:-10px&quot;>Opcionales: license · compatibility · allowed-tools · metadata (author, version…)</div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>16 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s16-progressive&quot; class=&quot;scene&quot; style=&quot;--block:#0ba5bf;--block-ink:#3fc6dc&quot; data-composition-id=&quot;s16-progressive&quot; data-start=&quot;58&quot; data-duration=&quot;5&quot; data-label=&quot;Pilar 4: progressive disclosure&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s16-progressive-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 3 · Pilar 4 · Por qué escala</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim><span class=&quot;hl&quot;>Progressive disclosure</span>:<span style=&quot;display:block&quot;>solo carga lo que necesita</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:60px;align-items:center&quot;>
+      <div class=&quot;col grow&quot; style=&quot;gap:18px;align-items:center&quot;>
+        <div class=&quot;node&quot; data-step=&quot;1&quot; style=&quot;width:100%;text-align:left;border-color:var(--accent)&quot;><b>1 · Siempre cargado:</b> <code>name</code> + <code>description</code><small>lo justo para decidir si aplica</small></div>
+        <div class=&quot;node&quot; data-step=&quot;2&quot; style=&quot;width:84%;text-align:left&quot;><b>2 · Al activarse:</b> cuerpo del SKILL.md<small>&amp;lt; 5,000 palabras</small></div>
+        <div class=&quot;node&quot; data-step=&quot;3&quot; style=&quot;width:68%;text-align:left&quot;><b>3 · Bajo demanda:</b> <code>references/</code><small>scripts/ se ejecutan, no entran al contexto</small></div>
+      </div>
+      <div class=&quot;col&quot; data-step=&quot;3&quot; style=&quot;width:600px;flex:none;gap:24px&quot;>
+        <div class=&quot;card&quot;><h3>Límites prácticos</h3><p>SKILL.md &amp;lt; 5,000 palabras · revisa si tienes más de 20–50 skills activas · tu skill convive con otros</p></div>
+        <div class=&quot;card accent&quot;><h3>Estándar abierto</h3><p>El mismo skill: Claude.ai, Claude Code y la API. Agent Skills es un estándar abierto, como MCP.</p></div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>17 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s17-pruebas&quot; class=&quot;scene&quot; style=&quot;--block:#0ba5bf;--block-ink:#3fc6dc&quot; data-composition-id=&quot;s17-pruebas&quot; data-start=&quot;63&quot; data-duration=&quot;4&quot; data-label=&quot;Prueba e itera tu skill&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s17-pruebas-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 3 · Prueba e itera</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim style=&quot;font-size:56px&quot;>Un skill está terminado cuando lo <span class=&quot;hl&quot;>pruebas</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:40px;align-items:flex-start;margin-top:-10px&quot;>
+      <div class=&quot;col&quot; data-anim style=&quot;width:620px;flex:none;gap:12px&quot;>
+        <div class=&quot;card&quot; style=&quot;padding:14px 26px&quot;><p style=&quot;color:var(--ink);font-size:30px;line-height:1.35&quot;><b>1 · Triggering</b><br><span class=&quot;muted&quot;>✓ obvias · ✓ paráfrasis · ✗ no relacionadas</span><br><span class=&quot;muted&quot;>meta: ~90% con 10–20 frases</span></p></div>
+        <div class=&quot;card&quot; style=&quot;padding:14px 26px&quot;><p style=&quot;color:var(--ink);font-size:30px;line-height:1.35&quot;><b>2 · Funcional</b><br><span class=&quot;muted&quot;>salidas correctas, errores, casos extremos</span></p></div>
+        <div class=&quot;card&quot; style=&quot;padding:14px 26px&quot;><p style=&quot;color:var(--ink);font-size:30px;line-height:1.35&quot;><b>3 · vs. baseline</b><br><span class=&quot;muted&quot;>12,000 → 6,000 tokens · 3 → 0 fallos</span><br><span class=&quot;mono muted&quot; style=&quot;font-size:22px&quot;>sin SKILL vs con SKILL</span></p></div>
+      </div>
+      <table class=&quot;t grow&quot; data-step=&quot;1&quot; style=&quot;font-size:30px&quot;>
+        <tr><th>Señal</th><th>Síntoma</th><th>Solución</th></tr>
+        <tr><td>Undertriggering</td><td>No se carga cuando debería</td><td>Más detalle y keywords en <code>description</code></td></tr>
+        <tr><td>Overtriggering</td><td>Se carga para cosas irrelevantes</td><td>Negative triggers, alcance más específico</td></tr>
+        <tr><td>Ejecución</td><td>Resultados inconsistentes</td><td>Mejores instrucciones y manejo de errores</td></tr>
+      </table>
+    </div>
+    <div class=&quot;row&quot; data-step=&quot;2&quot; style=&quot;gap:24px;align-items:stretch&quot;>
+      <div class=&quot;card accent grow&quot; style=&quot;padding:16px 28px&quot;><p style=&quot;color:var(--ink);font-size:30px&quot;>Debug: <i>“¿Cuándo usarías el skill pokecli?”</i></p></div>
+      <div class=&quot;card accent grow&quot; style=&quot;padding:16px 28px&quot;><p style=&quot;color:var(--ink);font-size:30px&quot;>Atajo: <b>skill-creator</b> genera y revisa skills <span class=&quot;muted&quot;>(Claude Code Skill)</span></p></div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>18 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s18-pokecli&quot; class=&quot;scene&quot; style=&quot;--block:#73c08c;--block-ink:#8fd4a6&quot; data-composition-id=&quot;s18-pokecli&quot; data-start=&quot;67&quot; data-duration=&quot;4&quot; data-label=&quot;Presentando PokeCLI&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s18-pokecli-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 4 · Demo</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <div class=&quot;row grow&quot; style=&quot;gap:60px;align-items:center&quot;>
+      <div class=&quot;col grow&quot; style=&quot;gap:32px&quot;>
+        <div class=&quot;mono&quot; data-anim style=&quot;font-size:120px;font-weight:700;letter-spacing:-0.04em;line-height:1&quot;><span class=&quot;c-prompt&quot;>$</span> poke<span class=&quot;hl&quot;>cli</span></div>
+        <p class=&quot;lead&quot; data-anim style=&quot;color:var(--ink)&quot;>PokéAPI desde la terminal: Pokémon, movimientos, tipos, evoluciones, encuentros y sprites.</p>
+        <div class=&quot;row&quot; data-anim style=&quot;gap:16px;flex-wrap:wrap&quot;><span class=&quot;chip&quot;>Python 3.12</span><span class=&quot;chip&quot;>Typer</span><span class=&quot;chip&quot;>httpx</span><span class=&quot;chip&quot;>Rich</span><span class=&quot;chip&quot;>PokéAPI</span></div>
+        <div class=&quot;code sm&quot; data-anim style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>instalación</span></div><pre><span class=&quot;c-prompt&quot;>$</span> uv tool install git+https://github.com/jebucaro/pokecli
+<span class=&quot;c-prompt&quot;>$</span> <span class=&quot;c-cmd&quot;>pokecli</span> install <span class=&quot;c-flag&quot;>--skills</span></pre></div>
+      </div>
+      <div class=&quot;col&quot; style=&quot;width:560px;flex:none;gap:28px&quot;>
+        <div class=&quot;code sm&quot; data-anim style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>repo</span></div><pre>src/pokecli/
+<span class=&quot;c-fm&quot;>├──</span> commands/
+<span class=&quot;c-fm&quot;>├──</span> display/    <span class=&quot;c-com&quot;># TOON + help[]</span>
+<span class=&quot;c-fm&quot;>└──</span> skills/pokecli/
+    <span class=&quot;c-fm&quot;>├──</span> SKILL.md
+    <span class=&quot;c-fm&quot;>└──</span> references/</pre></div>
+        <div class=&quot;row&quot; data-anim style=&quot;gap:22px;align-items:center&quot;>
+          <img src=&quot;assets/img/qrcode_pokecli.png&quot; alt=&quot;QR al repo de pokecli&quot; style=&quot;width:180px;height:180px;flex:none;display:block;border-radius:12px&quot;>
+          <div class=&quot;mono muted&quot; style=&quot;font-size:24px;line-height:1.5&quot;>github.com/<br>jebucaro/pokecli</div>
+        </div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>19 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s19-pokecli-skill&quot; class=&quot;scene&quot; style=&quot;--block:#73c08c;--block-ink:#8fd4a6&quot; data-composition-id=&quot;s19-pokecli-skill&quot; data-start=&quot;71&quot; data-duration=&quot;6&quot; data-label=&quot;PokeCLI: el SKILL.md&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s19-pokecli-skill-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 4 · Los 4 pilares en un archivo</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <div class=&quot;row grow&quot; style=&quot;gap:50px;align-items:center&quot;>
+      <div class=&quot;code grow&quot; data-anim>
+        <div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>src/pokecli/skills/pokecli/SKILL.md (extracto)</span></div>
+        <div style=&quot;padding:22px 34px;font:400 27px/1.5 'JetBrains Mono',monospace;white-space:pre;color:var(--ink)&quot;><div class=&quot;hl-box&quot;><span class=&quot;hl-bg&quot; data-step=&quot;1&quot; style=&quot;background:rgba(109,173,221,0.16);border:2px solid var(--sky-fill)&quot;></span><div style=&quot;position:relative&quot;><span class=&quot;c-fm&quot;>---</span>
+<span class=&quot;c-key&quot;>name</span>: pokecli
+<div class=&quot;hl-box&quot;><span class=&quot;hl-bg&quot; data-step=&quot;2&quot; style=&quot;background:rgba(237,149,21,0.16);border:2px solid var(--accent)&quot;></span><div style=&quot;position:relative&quot;><span class=&quot;c-key&quot;>description</span>: Queries Pokemon, moves, items, types...
+  Use when the user needs Pokemon stats, move info,
+  type matchups, catch locations, evolution chains...</div></div><span class=&quot;c-key&quot;>allowed-tools</span>: Bash(pokecli:*)
+<span class=&quot;c-fm&quot;>---</span></div></div>
+<div class=&quot;hl-box&quot;><span class=&quot;hl-bg&quot; data-step=&quot;4&quot; style=&quot;background:rgba(156,90,152,0.24);border:2px solid var(--purple)&quot;></span><div style=&quot;position:relative&quot;><span class=&quot;c-head&quot;>## The whole grammar</span>
+pokecli get <span class=&quot;c-flag&quot;>&amp;lt;resource&amp;gt;</span> &amp;lt;name_or_id&amp;gt;
+pokecli list <span class=&quot;c-flag&quot;>&amp;lt;resource&amp;gt;</span> <span class=&quot;c-flag&quot;>--limit</span> 20
+pokecli search <span class=&quot;c-flag&quot;>&amp;lt;resource&amp;gt;</span> &amp;lt;query&amp;gt;</div></div>
+<div class=&quot;hl-box&quot;><span class=&quot;hl-bg&quot; data-step=&quot;3&quot; style=&quot;background:rgba(86,180,70,0.16);border:2px solid var(--green-fill)&quot;></span><div style=&quot;position:relative&quot;><span class=&quot;c-head&quot;>## Decision table</span>
+| Can it learn move X? | <span class=&quot;c-str&quot;>pokecli can-learn &amp;lt;name&amp;gt; &amp;lt;move&amp;gt;</span> |
+| Full evolution chain | <span class=&quot;c-str&quot;>pokecli evolution &amp;lt;name&amp;gt;</span>        |</div></div></div>
+      </div>
+      <div class=&quot;col&quot; style=&quot;width:420px;flex:none;gap:30px&quot;>
+        <div class=&quot;legend&quot; data-step=&quot;1&quot;><span class=&quot;sw&quot; style=&quot;background:var(--sky-fill)&quot;></span>Frontmatter · <b>pilar 4</b></div>
+        <div class=&quot;legend&quot; data-step=&quot;2&quot;><span class=&quot;sw&quot; style=&quot;background:var(--accent)&quot;></span>Trigger · <b>pilar 2</b></div>
+        <div class=&quot;legend&quot; data-step=&quot;3&quot;><span class=&quot;sw&quot; style=&quot;background:var(--green-fill)&quot;></span>Ejemplos · <b>pilar 3</b></div>
+        <div class=&quot;legend&quot; data-step=&quot;4&quot;><span class=&quot;sw&quot; style=&quot;background:var(--purple-fill)&quot;></span>Gramática · <b>pilar 1</b></div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>20 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s20-demo&quot; class=&quot;scene dark&quot; style=&quot;--block:#73c08c;--block-ink:#8fd4a6&quot; data-composition-id=&quot;s20-demo&quot; data-start=&quot;77&quot; data-duration=&quot;4&quot; data-label=&quot;Demo en vivo&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s20-demo-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 4 · Demo en vivo</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <div class=&quot;row grow&quot; style=&quot;gap:80px;align-items:center&quot;>
+      <div class=&quot;mono&quot; data-anim style=&quot;font-size:200px;font-weight:700;letter-spacing:-0.05em;line-height:1;color:var(--accent);flex:none&quot;>DEMO</div>
+      <div class=&quot;col grow&quot; style=&quot;gap:30px&quot;>
+        <div class=&quot;card&quot; data-anim><span class=&quot;num&quot;>01 · uso básico</span><p style=&quot;color:var(--ink);font-size:38px&quot;>“¿Qué tipo es Gengar y cuáles son sus debilidades?”</p></div>
+        <div class=&quot;card&quot; data-anim><span class=&quot;num&quot;>02 · múltiples llamadas + interpretación</span><p style=&quot;color:var(--ink);font-size:38px&quot;>“Compara las estadísticas de Charizard y Blastoise”</p></div>
+        <div class=&quot;card accent&quot; data-anim><span class=&quot;num&quot;>03 · el agente orquesta el CLI</span><p style=&quot;color:var(--ink);font-size:38px&quot;>“¿Cuál es la diferencia entre Rayo y Lanzallamas?”</p></div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>21 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s21-industria&quot; class=&quot;scene&quot; style=&quot;--block:#6daddd;--block-ink:#8ec3ea&quot; data-composition-id=&quot;s21-industria&quot; data-start=&quot;81&quot; data-duration=&quot;3&quot; data-label=&quot;Las grandes apuestan por CLIs&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s21-industria-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 5 · La industria</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Las grandes también están apostando por <span class=&quot;hl&quot;>CLIs</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:40px;align-items:stretch&quot;>
+      <div class=&quot;card grow&quot; data-anim><span class=&quot;num&quot;>GOOGLE</span><h3>Google Workspace CLI</h3><p>CLI para sus productos, deprecando su MCP de Workspace en favor del CLI (dos d&amp;iacute;as despu&amp;eacute;s del lanzamiento).</p>
+        <div class=&quot;links&quot;><a href=&quot;https://github.com/googleworkspace/cli&quot; target=&quot;_blank&quot;>github.com/googleworkspace/cli</a><a href=&quot;https://dev.to/gys/not-everything-needs-mcp-what-google-workspace-cli-taught-us-about-ai-agent-architecture-2doe&quot; target=&quot;_blank&quot;>dev.to · Not everything needs MCP</a></div></div>
+      <div class=&quot;card grow&quot; data-anim><span class=&quot;num&quot;>MICROSOFT</span><h3>Playwright CLI</h3><p>Lanzada aun teniendo un Playwright MCP muy popular.</p>
+        <div class=&quot;links&quot;><a href=&quot;https://github.com/microsoft/playwright-cli&quot; target=&quot;_blank&quot;>github.com/microsoft/playwright-cli</a><a href=&quot;https://dev.to/aswani25/playwright-cli-vs-playwright-mcp-which-should-you-use-with-claude-code-1olh&quot; target=&quot;_blank&quot;>dev.to · Playwright CLI vs Playwright MCP</a></div></div>
+    </div>
+    <div class=&quot;row&quot; data-step=&quot;1&quot; style=&quot;gap:20px;align-items:center;flex-wrap:wrap&quot;>
+      <span style=&quot;font-size:36px;color:var(--muted)&quot;>Y las siguientes CLI empaquetan sus propias SKILLs:</span><span class=&quot;chip&quot;>gh</span><span class=&quot;chip&quot;>aws</span><span class=&quot;chip&quot;>gcloud</span>
+      <span style=&quot;font-size:36px;color:var(--ink)&quot;>→ un CLI sirve al humano, al CI y al agente.</span>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>22 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s22-mcp-vs-cli&quot; class=&quot;scene&quot; style=&quot;--block:#6daddd;--block-ink:#8ec3ea&quot; data-composition-id=&quot;s22-mcp-vs-cli&quot; data-start=&quot;84&quot; data-duration=&quot;3&quot; data-label=&quot;¿Entonces MCP murió? No.&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s22-mcp-vs-cli-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 5 · MCP vs CLI</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>¿Entonces MCP murió? <span class=&quot;hl&quot;>No.</span></h1>
+    <div class=&quot;row&quot; style=&quot;gap:40px;align-items:flex-start&quot;>
+      <table class=&quot;t grow&quot; data-anim style=&quot;font-size:29px&quot;>
+        <tr><th></th><th class=&quot;hcli&quot;>CLI + Skill</th><th class=&quot;hmcp&quot;>MCP</th></tr>
+        <tr><td>Costo de contexto</td><td>Bajo (progressive disclosure)</td><td>Schemas de todas las tools</td></tr>
+        <tr><td>Composición</td><td>Pipes, <code>jq</code>, scripts</td><td>Limitada a las tools expuestas</td></tr>
+        <tr><td>Reutilización humana</td><td>Tu equipo y tu CI</td><td>Pensado para agentes</td></tr>
+        <tr><td>Requiere shell</td><td>Sí</td><td>No</td></tr>
+        <tr><td>Auth remota / OAuth</td><td>Manual</td><td class=&quot;ok&quot;>✓ Fuerte</td></tr>
+        <tr><td>Clientes sin terminal</td><td class=&quot;bad&quot;>✗</td><td class=&quot;ok&quot;>✓</td></tr>
+        <tr><td>Gobernanza central</td><td>Difícil</td><td class=&quot;ok&quot;>✓</td></tr>
+      </table>
+      <div class=&quot;col&quot; data-step=&quot;1&quot; style=&quot;width:440px;flex:none;gap:14px&quot;>
+        <div class=&quot;card&quot; style=&quot;padding:20px 28px;border-color:rgba(109,173,221,0.6)&quot;><span class=&quot;num&quot; style=&quot;color:var(--sky)&quot;>MCP</span><h3 style=&quot;font-size:36px&quot;>La cocina industrial</h3><p style=&quot;font-size:28px&quot;>potente, pero hay que montarla y mantenerla</p></div>
+        <div class=&quot;card green&quot; style=&quot;padding:20px 28px&quot;><span class=&quot;num&quot; style=&quot;color:var(--green)&quot;>CLI</span><h3 style=&quot;font-size:36px&quot;>Tu cocina de casa</h3><p style=&quot;font-size:28px&quot;>ya la tienes, y para el día a día alcanza</p></div>
+        <div class=&quot;card accent&quot; style=&quot;padding:20px 28px&quot;><span class=&quot;num&quot;>SKILLS</span><h3 style=&quot;font-size:36px&quot;>Las recetas</h3><p style=&quot;font-size:28px&quot;>sirven en ambas cocinas</p></div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>23 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s23-decision&quot; class=&quot;scene&quot; style=&quot;--block:#6daddd;--block-ink:#8ec3ea&quot; data-composition-id=&quot;s23-decision&quot; data-start=&quot;87&quot; data-duration=&quot;7&quot; data-label=&quot;Regla práctica para decidir&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s23-decision-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 5 · Regla práctica</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Regla práctica para decidir</h1>
+    <div class=&quot;col&quot; style=&quot;gap:18px&quot;>
+      
+      <div class=&quot;row&quot; data-step=&quot;1&quot; style=&quot;gap:24px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 30px&quot;>
+        <span class=&quot;grow&quot; style=&quot;font-size:36px&quot;>¿El agente corre donde hay shell?</span>
+        <span class=&quot;mono muted&quot; style=&quot;font-size:30px;flex:none&quot;>No →</span>
+        <span class=&quot;tag&quot; style=&quot;color:var(--sky);flex:none&quot;>MCP</span>
+      </div>
+      <div class=&quot;row&quot; data-step=&quot;2&quot; style=&quot;gap:24px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 30px&quot;>
+        <span class=&quot;grow&quot; style=&quot;font-size:36px&quot;>¿Auth delegada por usuario / servicio remoto multi-tenant?</span>
+        <span class=&quot;mono muted&quot; style=&quot;font-size:30px;flex:none&quot;>Sí →</span>
+        <span class=&quot;tag&quot; style=&quot;color:var(--sky);flex:none&quot;>MCP</span>
+      </div>
+      <div class=&quot;row&quot; data-step=&quot;3&quot; style=&quot;gap:24px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 30px&quot;>
+        <span class=&quot;grow&quot; style=&quot;font-size:36px&quot;>¿Tu equipo también lo usaría desde la terminal?</span>
+        <span class=&quot;mono muted&quot; style=&quot;font-size:30px;flex:none&quot;>Sí →</span>
+        <span class=&quot;tag&quot; style=&quot;color:var(--accent);flex:none&quot;>CLI + Skill</span>
+      </div>
+      <div class=&quot;row&quot; data-step=&quot;4&quot; style=&quot;gap:24px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 30px&quot;>
+        <span class=&quot;grow&quot; style=&quot;font-size:36px&quot;>¿Ya tienes el script?</span>
+        <span class=&quot;mono muted&quot; style=&quot;font-size:30px;flex:none&quot;>Sí →</span>
+        <span class=&quot;tag&quot; style=&quot;color:var(--accent);flex:none&quot;>CLI + Skill · empieza hoy</span>
+      </div>
+      <div class=&quot;row&quot; data-step=&quot;5&quot; style=&quot;gap:24px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 30px&quot;>
+        <span class=&quot;grow&quot; style=&quot;font-size:36px&quot;>¿Por qué no ambos?</span>
+        <span class=&quot;mono muted&quot; style=&quot;font-size:30px;flex:none&quot;>→</span>
+        <span class=&quot;tag&quot; style=&quot;color:var(--green);flex:none&quot;>Mismo core, distintos adaptadores → Banguat</span>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>24 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s24-banguat-soap&quot; class=&quot;scene&quot; style=&quot;--block:#ed9515;--block-ink:#f2a93f&quot; data-composition-id=&quot;s24-banguat-soap&quot; data-start=&quot;94&quot; data-duration=&quot;4&quot; data-label=&quot;Banguat: el servicio SOAP&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s24-banguat-soap-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 6 · Caso de estudio · Banguat</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <div class=&quot;row grow&quot; style=&quot;gap:50px;align-items:center&quot;>
+      <div class=&quot;col&quot; style=&quot;width:640px;flex:none;gap:34px&quot;>
+        <img data-anim src=&quot;assets/img/banguat-logo.png&quot; alt=&quot;Banco de Guatemala&quot; style=&quot;width:120px;height:120px;display:block;border-radius:50%&quot;>
+        <h1 class=&quot;title&quot; data-anim>Tipo de cambio oficial… vía <span class=&quot;hl&quot;>SOAP</span></h1>
+        <p class=&quot;lead&quot; data-anim>SOAP puro en <code>TipoCambio.asmx</code>, operaciones en español y fechas en <code>dd/MM/yyyy</code>. Necesidad: varias monedas contra el quetzal, por día y por rango.</p>
+        <div class=&quot;row&quot; data-anim style=&quot;gap:14px;flex-wrap:wrap&quot;><span class=&quot;chip&quot; style=&quot;font-size:24px&quot;>TipoCambioDia</span><span class=&quot;chip&quot; style=&quot;font-size:24px&quot;>TipoCambioRango</span><span class=&quot;chip&quot; style=&quot;font-size:24px&quot;>Variables</span></div>
+      </div>
+      <div class=&quot;code sm grow&quot; data-anim style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>POST /variables/ws/TipoCambio.asmx</span></div><pre><span class=&quot;c-com&quot;>&amp;lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&amp;gt;</span>
+<span class=&quot;c-tag&quot;>&amp;lt;soap:Envelope</span>
+ <span class=&quot;c-key&quot;> xmlns:soap</span>=<span class=&quot;c-str&quot;>&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;</span><span class=&quot;c-tag&quot;>&amp;gt;</span>
+  <span class=&quot;c-tag&quot;>&amp;lt;soap:Body</span><span class=&quot;c-tag&quot;>&amp;gt;</span>
+    <span class=&quot;c-tag&quot;>&amp;lt;TipoCambioRangoMoneda</span>
+     <span class=&quot;c-key&quot;> xmlns</span>=<span class=&quot;c-str&quot;>&quot;http://www.banguat.gob.gt/variables/ws/&quot;</span><span class=&quot;c-tag&quot;>&amp;gt;</span>
+      <span class=&quot;c-tag&quot;>&amp;lt;fechainit</span><span class=&quot;c-tag&quot;>&amp;gt;</span>01/09/2026<span class=&quot;c-tag&quot;>&amp;lt;/fechainit</span><span class=&quot;c-tag&quot;>&amp;gt;</span>
+      <span class=&quot;c-tag&quot;>&amp;lt;fechafin</span><span class=&quot;c-tag&quot;>&amp;gt;</span>30/09/2026<span class=&quot;c-tag&quot;>&amp;lt;/fechafin</span><span class=&quot;c-tag&quot;>&amp;gt;</span>
+      <span class=&quot;c-tag&quot;>&amp;lt;moneda</span><span class=&quot;c-tag&quot;>&amp;gt;</span>2<span class=&quot;c-tag&quot;>&amp;lt;/moneda</span><span class=&quot;c-tag&quot;>&amp;gt;</span>
+    <span class=&quot;c-tag&quot;>&amp;lt;/TipoCambioRangoMoneda</span><span class=&quot;c-tag&quot;>&amp;gt;</span>
+  <span class=&quot;c-tag&quot;>&amp;lt;/soap:Body</span><span class=&quot;c-tag&quot;>&amp;gt;</span>
+<span class=&quot;c-tag&quot;>&amp;lt;/soap:Envelope</span><span class=&quot;c-tag&quot;>&amp;gt;</span></pre></div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>25 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s25-arquitectura&quot; class=&quot;scene&quot; style=&quot;--block:#ed9515;--block-ink:#f2a93f&quot; data-composition-id=&quot;s25-arquitectura&quot; data-start=&quot;98&quot; data-duration=&quot;4&quot; data-label=&quot;Un core, tres adaptadores&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s25-arquitectura-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 6 · La arquitectura</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Un core, <span class=&quot;hl&quot;>tres adaptadores</span></h1>
+    <div class=&quot;col grow center&quot; style=&quot;gap:0;position:relative&quot;>
+      <div class=&quot;node&quot; data-anim style=&quot;width:420px;border-style:dashed&quot;>Banguat SOAP<small>XML · WSDL</small></div>
+      <div data-anim style=&quot;width:3px;height:44px;background:var(--faint)&quot;></div>
+      <div class=&quot;node&quot; data-step=&quot;1&quot; style=&quot;width:760px;border-color:var(--accent);background:#2e2418&quot;><b>Banguat.ExchangeRates (core)</b><small>librería .NET 10 · sobre SOAP · validación · caché</small></div>
+      <div data-step=&quot;2&quot; style=&quot;position:relative;width:1240px;height:56px&quot;>
+        <svg width=&quot;1240&quot; height=&quot;56&quot; viewBox=&quot;0 0 1240 56&quot; fill=&quot;none&quot; stroke=&quot;#8f8ca3&quot; stroke-width=&quot;3&quot; style=&quot;position:absolute;inset:0&quot;><path d=&quot;M620 0V28M180 28H1060M180 28V56M620 28V56M1060 28V56&quot;/></svg>
+      </div>
+      <div class=&quot;row&quot; data-step=&quot;2&quot; style=&quot;gap:60px&quot;>
+        <div class=&quot;node&quot; style=&quot;width:380px&quot;><b>CLI + skill</b><small>agentes con terminal · humanos</small></div>
+        <div class=&quot;node&quot; style=&quot;width:380px&quot;><b>MCP</b><small>clientes sin shell</small></div>
+        <div class=&quot;node&quot; style=&quot;width:380px&quot;><b>REST API</b><small>versionada · cualquier app</small></div>
+      </div>
+      <div class=&quot;mono muted&quot; data-step=&quot;2&quot; style=&quot;font-size:24px;margin-top:28px&quot;>REST y MCP detrás de un gateway YARP · orquestado con Aspire</div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>26 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s26-banguat-cli&quot; class=&quot;scene&quot; style=&quot;--block:#ed9515;--block-ink:#f2a93f&quot; data-composition-id=&quot;s26-banguat-cli&quot; data-start=&quot;102&quot; data-duration=&quot;4&quot; data-label=&quot;El CLI de Banguat y su skill&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s26-banguat-cli-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 6 · CLI + Skill</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim style=&quot;font-size:64px&quot;>Comandos cortos, flags explícitos, <span class=&quot;hl&quot;>JSON</span></h1>
+    <div class=&quot;code &quot; data-anim style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>terminal</span></div><pre><span class=&quot;c-prompt&quot;>$</span> <span class=&quot;c-cmd&quot;>banguat</span>-exchangerates-cli rate <span class=&quot;c-flag&quot;>--currency</span> USD <span class=&quot;c-flag&quot;>-o</span> json
+<span class=&quot;c-prompt&quot;>$</span> <span class=&quot;c-cmd&quot;>banguat</span>-exchangerates-cli rate history <span class=&quot;c-flag&quot;>--currency</span> EUR \
+    <span class=&quot;c-flag&quot;>--from</span> 2026-09-01 <span class=&quot;c-flag&quot;>--to</span> 2026-09-30 <span class=&quot;c-flag&quot;>-o</span> json
+<span class=&quot;c-prompt&quot;>$</span> <span class=&quot;c-cmd&quot;>banguat</span>-exchangerates-cli currencies</pre></div>
+    <div class=&quot;row&quot; style=&quot;gap:36px;align-items:stretch&quot;>
+      <div class=&quot;card grow&quot; data-anim style=&quot;padding:24px 32px&quot;><div class=&quot;mono&quot; style=&quot;font-size:24px;line-height:1.55;color:var(--ink)&quot;><span class=&quot;c-key&quot;>description:</span> Use this skill whenever a task needs a Guatemalan Quetzal (GTQ) exchange rate... <span style=&quot;color:var(--accent)&quot;>Trigger on any mention of Banguat, Quetzal, GTQ, Guatemala's central bank...</span></div></div>
+      <div class=&quot;col&quot; data-anim style=&quot;width:640px;flex:none;gap:12px&quot;>
+        <div class=&quot;mono muted&quot; style=&quot;font-size:24px;letter-spacing:0.12em&quot;>GOTCHAS DOCUMENTADOS</div>
+        <span class=&quot;chip&quot; style=&quot;font-size:24px&quot;>rango sin datos: count 0, no es error</span>
+        <span class=&quot;chip&quot; style=&quot;font-size:24px&quot;>USB → &quot;Did you mean: USD?&quot;</span>
+        <span class=&quot;chip&quot; style=&quot;font-size:24px&quot;>--since o --from/--to, nunca ambos</span>
+        <span class=&quot;chip&quot; style=&quot;font-size:24px&quot;>códigos de Banguat, no ISO 4217</span>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>27 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s27-banguat-accion&quot; class=&quot;scene&quot; style=&quot;--block:#ed9515;--block-ink:#f2a93f&quot; data-composition-id=&quot;s27-banguat-accion&quot; data-start=&quot;106&quot; data-duration=&quot;3&quot; data-label=&quot;Banguat en acción + lecciones&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s27-banguat-accion-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 6 · En acción</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <div class=&quot;row grow&quot; style=&quot;gap:50px;align-items:stretch&quot;>
+      <div class=&quot;col grow&quot; style=&quot;gap:20px&quot; data-anim>
+        <div class=&quot;card&quot; style=&quot;padding:22px 30px;align-self:flex-end;max-width:900px;border-color:rgba(109,173,221,0.5)&quot;><p style=&quot;color:var(--ink);font-size:34px&quot;>¿A cuánto estuvo el dólar la semana pasada y cuál fue el promedio?</p></div>
+        <div class=&quot;code sm&quot;  style=&quot;&quot;><div class=&quot;bar&quot;><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;dot&quot;></span><span class=&quot;fname&quot;>el agente ejecuta</span></div><pre><span class=&quot;c-prompt&quot;>$</span> <span class=&quot;c-cmd&quot;>banguat</span>-exchangerates-cli rate history \
+    <span class=&quot;c-flag&quot;>--currency</span> USD <span class=&quot;c-flag&quot;>--from</span> ‹lunes› <span class=&quot;c-flag&quot;>--to</span> ‹viernes› \
+    <span class=&quot;c-flag&quot;>-o</span> json</pre></div>
+        <div class=&quot;card accent&quot; style=&quot;padding:22px 30px;max-width:900px&quot;><p style=&quot;color:var(--ink);font-size:34px&quot;>Datos oficiales del Banguat, el agente calcula el promedio y responde. <span class=&quot;muted&quot;>El agente nunca ve SOAP ni XML.</span></p></div>
+      </div>
+      <div class=&quot;col&quot; data-step=&quot;1&quot; style=&quot;width:620px;flex:none;gap:22px;justify-content:center&quot;>
+        <div class=&quot;mono muted&quot; style=&quot;font-size:24px;letter-spacing:0.12em&quot;>LECCIONES</div>
+        <div class=&quot;card&quot; style=&quot;padding:24px 30px&quot;><p style=&quot;color:var(--ink)&quot;>La frontera entre lo legacy y lo nuevo, en un solo lugar: el SOAP quedó escondido</p></div>
+        <div class=&quot;card&quot; style=&quot;padding:24px 30px&quot;><p style=&quot;color:var(--ink)&quot;>El mismo CLI sirve a humanos, CI y agentes</p></div>
+        <div class=&quot;card&quot; style=&quot;padding:24px 30px&quot;><p style=&quot;color:var(--ink)&quot;>MCP y REST llegaron después, sin tocar la lógica</p></div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>28 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s28-tarea&quot; class=&quot;scene&quot; style=&quot;--block:#56b446;--block-ink:#7fd06f&quot; data-composition-id=&quot;s28-tarea&quot; data-start=&quot;109&quot; data-duration=&quot;3&quot; data-label=&quot;Tu tarea para el lunes&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s28-tarea-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 7 · Cierre</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Tu tarea para el <span class=&quot;hl&quot;>lunes</span></h1>
+    <div class=&quot;list&quot; style=&quot;gap:24px;margin-top:10px&quot;>
+      <div class=&quot;li&quot; data-anim style=&quot;font-size:44px&quot;><span class=&quot;b&quot; style=&quot;color:var(--accent);width:70px&quot;>01</span><span>Escoge <b>un</b> script que uses cada semana</span></div><div class=&quot;li&quot; data-anim style=&quot;font-size:44px&quot;><span class=&quot;b&quot; style=&quot;color:var(--accent);width:70px&quot;>02</span><span>Saca los valores quemados a flags, agrega <code>--json</code></span></div><div class=&quot;li&quot; data-anim style=&quot;font-size:44px&quot;><span class=&quot;b&quot; style=&quot;color:var(--accent);width:70px&quot;>03</span><span>Escribe una <code>description</code>: qué hace y cuándo usarla</span></div><div class=&quot;li&quot; data-anim style=&quot;font-size:44px&quot;><span class=&quot;b&quot; style=&quot;color:var(--accent);width:70px&quot;>04</span><span>Agrega 2–3 ejemplos con su salida esperada</span></div><div class=&quot;li&quot; data-anim style=&quot;font-size:44px&quot;><span class=&quot;b&quot; style=&quot;color:var(--accent);width:70px&quot;>05</span><span>Guárdalo como <code>SKILL.md</code> y pruébalo con tu agente</span></div>
+    </div>
+    <div class=&quot;card accent row&quot; data-step=&quot;1&quot; style=&quot;padding:18px 30px;margin-top:16px;gap:28px;align-items:center&quot;><p class=&quot;grow&quot; style=&quot;color:var(--ink);font-size:32px&quot;><b>¿No tienes un script?</b> Instala <code>pokecli</code>, juega con él y escribe tu propio skill. <span class=&quot;muted&quot;>Después compáralo con el que trae.</span></p><img src=&quot;assets/img/qrcode_pokecli.png&quot; alt=&quot;QR al repo de pokecli&quot; style=&quot;width:130px;height:130px;flex:none;display:block;border-radius:10px&quot;></div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>29 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s29-mensaje&quot; class=&quot;scene&quot; style=&quot;--block:#56b446;--block-ink:#7fd06f&quot; data-composition-id=&quot;s29-mensaje&quot; data-start=&quot;112&quot; data-duration=&quot;4&quot; data-label=&quot;Mensaje final&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s29-mensaje-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 7 · Mensaje final</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <div class=&quot;col grow center&quot; style=&quot;gap:70px;text-align:center&quot;>
+      <h1 class=&quot;title xl&quot; data-anim style=&quot;font-size:110px;max-width:1600px&quot;>No te quedaste atrás.<br><span class=&quot;hl&quot;>Tus scripts son tu ventaja.</span></h1>
+      <div class=&quot;row&quot; data-anim style=&quot;gap:60px&quot;>
+        <div class=&quot;col center&quot; style=&quot;gap:14px&quot;><svg width=&quot;64&quot; height=&quot;64&quot; style=&quot;display:block&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#ed9515&quot; stroke-width=&quot;1.8&quot; stroke-linecap=&quot;round&quot;><rect x=&quot;5&quot; y=&quot;11&quot; width=&quot;14&quot; height=&quot;10&quot; rx=&quot;2&quot;/><path d=&quot;M8 11V7a4 4 0 0 1 8 0v4&quot;/></svg><span class=&quot;mono muted&quot; style=&quot;font-size:26px&quot;>Determinista</span></div><div class=&quot;col center&quot; style=&quot;gap:14px&quot;><svg width=&quot;64&quot; height=&quot;64&quot; style=&quot;display:block&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#ed9515&quot; stroke-width=&quot;1.8&quot;><circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;9&quot;/><circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;5&quot;/><circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;1.5&quot; fill=&quot;#ed9515&quot;/></svg><span class=&quot;mono muted&quot; style=&quot;font-size:26px&quot;>Trigger</span></div><div class=&quot;col center&quot; style=&quot;gap:14px&quot;><svg width=&quot;64&quot; height=&quot;64&quot; style=&quot;display:block&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#ed9515&quot; stroke-width=&quot;1.8&quot; stroke-linejoin=&quot;round&quot;><path d=&quot;M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z&quot;/><path d=&quot;M9 4v14M15 6v14&quot;/></svg><span class=&quot;mono muted&quot; style=&quot;font-size:26px&quot;>Ejemplos</span></div><div class=&quot;col center&quot; style=&quot;gap:14px&quot;><svg width=&quot;64&quot; height=&quot;64&quot; style=&quot;display:block&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;#ed9515&quot; stroke-width=&quot;1.8&quot; stroke-linejoin=&quot;round&quot;><path d=&quot;M3 7l9-4 9 4-9 4z&quot;/><path d=&quot;M3 7v10l9 4 9-4V7M12 11v10&quot;/></svg><span class=&quot;mono muted&quot; style=&quot;font-size:26px&quot;>SKILL.md</span></div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>30 / 32</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;s30-gracias&quot; class=&quot;scene band&quot; style=&quot;--block:#56b446;--block-ink:#7fd06f&quot; data-composition-id=&quot;s30-gracias&quot; data-start=&quot;116&quot; data-duration=&quot;4&quot; data-label=&quot;Gracias + recursos&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s30-gracias-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 7 · Gracias</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <div class=&quot;row grow&quot; style=&quot;gap:80px;align-items:center&quot;>
+      <div class=&quot;col grow&quot; style=&quot;gap:36px&quot;>
+        <h1 class=&quot;title xl&quot; data-anim style=&quot;font-size:120px&quot;>¡Gracias!<br><span class=&quot;hl&quot;>¿Preguntas?</span></h1>
+      </div>
+      <div class=&quot;row&quot; data-anim style=&quot;gap:48px;flex:none;align-items:flex-start&quot;>
+        <div class=&quot;col&quot; style=&quot;gap:20px;align-items:center&quot;>
+          <img src=&quot;assets/img/avatar.png&quot; alt=&quot;Jonathan Búcaro&quot; style=&quot;width:320px;height:320px;display:block;border-radius:50%;border:4px solid var(--accent)&quot;>
+          <div class=&quot;mono muted&quot; style=&quot;font-size:26px&quot;>Jonathan B&amp;uacute;caro</div>
+        </div>
+        <div class=&quot;col&quot; style=&quot;gap:20px;align-items:center&quot;>
+          <img src=&quot;assets/img/qrcode_jonathanbucaro.com.png&quot; alt=&quot;QR a jonathanbucaro.com&quot; style=&quot;width:320px;height:320px;display:block;border-radius:16px&quot;>
+          <div class=&quot;mono muted&quot; style=&quot;font-size:26px&quot;>jonathanbucaro.com</div>
+        </div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>31 / 32</span><span class=&quot;fsep&quot;>·</span>AWS Community Day · Guatemala</div>
+  </div>
+</div>
+
+<div id=&quot;s31-organizadores&quot; class=&quot;scene band&quot; style=&quot;--block:#56b446;--block-ink:#7fd06f&quot; data-composition-id=&quot;s31-organizadores&quot; data-start=&quot;120&quot; data-duration=&quot;4&quot; data-label=&quot;Organizadores&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;s31-organizadores-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Bloque 7 · Organizadores</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim>Únete a la <span class=&quot;hl&quot;>comunidad</span></h1>
+    <div class=&quot;row grow&quot; style=&quot;gap:60px;align-items:center;justify-content:space-between&quot;>
+      <div class=&quot;row&quot; data-anim style=&quot;gap:80px;align-items:center&quot;>
+        <img src=&quot;assets/img/aws-user-group.png&quot; alt=&quot;AWS User Group Guatemala&quot; style=&quot;height:400px;width:auto;display:block&quot;>
+        <img src=&quot;assets/img/aws-girls.png&quot; alt=&quot;AWS Guatemala Girls Chapter&quot; style=&quot;height:280px;width:auto;display:block&quot;>
+        <img src=&quot;assets/img/aws-progreso.png&quot; alt=&quot;AWS User Group El Progreso&quot; style=&quot;height:400px;width:auto;display:block&quot;>
+      </div>
+      <div class=&quot;col&quot; data-anim style=&quot;gap:20px;align-items:center;flex:none&quot;>
+        <img src=&quot;assets/img/qr-user-group.png&quot; alt=&quot;QR para unirte al AWS User Group Guatemala&quot; style=&quot;width:320px;height:320px;display:block;border-radius:16px&quot;>
+        <div class=&quot;mono muted&quot; style=&quot;font-size:26px&quot;>Escanea y únete</div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>32 / 32</span><span class=&quot;fsep&quot;>·</span>AWS Community Day · Guatemala</div>
+  </div>
+</div>
+
+<div id=&quot;a1-faq&quot; class=&quot;scene&quot; style=&quot;--block:#9c5a98;--block-ink:#cf96cb&quot; data-composition-id=&quot;a1-faq&quot; data-start=&quot;124&quot; data-duration=&quot;4&quot; data-label=&quot;Preguntas probables&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;a1-faq-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Anexo · Preguntas probables</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim style=&quot;font-size:60px&quot;>Preguntas probables</h1>
+    <div class=&quot;col&quot; style=&quot;gap:16px&quot;>
+      <div class=&quot;card&quot; data-anim style=&quot;padding:18px 30px&quot;><p style=&quot;font-size:30px;line-height:1.35&quot;><b style=&quot;color:var(--ink)&quot;>¿Es seguro dejar que un agente ejecute comandos?</b><br>Menor privilegio: credenciales de solo lectura, --dry-run, confirmación humana en operaciones destructivas, ambientes separados.</p></div><div class=&quot;card&quot; data-anim style=&quot;padding:18px 30px&quot;><p style=&quot;font-size:30px;line-height:1.35&quot;><b style=&quot;color:var(--ink)&quot;>¿Funciona solo con Claude?</b><br>Agent Skills es un formato abierto, y un CLI bien diseñado lo puede usar cualquier agente con terminal.</p></div><div class=&quot;card&quot; data-anim style=&quot;padding:18px 30px&quot;><p style=&quot;font-size:30px;line-height:1.35&quot;><b style=&quot;color:var(--ink)&quot;>¿Skill vs. prompt de sistema?</b><br>Progressive disclosure: solo se carga cuando aplica y puede incluir scripts y referencias.</p></div><div class=&quot;card&quot; data-anim style=&quot;padding:18px 30px&quot;><p style=&quot;font-size:30px;line-height:1.35&quot;><b style=&quot;color:var(--ink)&quot;>¿Y si ya tengo un MCP?</b><br>No lo tires. Extrae el core y agrega un CLI como otro adaptador (caso Banguat).</p></div><div class=&quot;card&quot; data-anim style=&quot;padding:18px 30px&quot;><p style=&quot;font-size:30px;line-height:1.35&quot;><b style=&quot;color:var(--ink)&quot;>¿Cómo pruebo que se activa bien?</b><br>Lista de prompts que deberían activarla y otros que no; verifica ambos.</p></div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>ANEXO</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+
+<div id=&quot;a2-checklist&quot; class=&quot;scene&quot; style=&quot;--block:#9c5a98;--block-ink:#cf96cb&quot; data-composition-id=&quot;a2-checklist&quot; data-start=&quot;128&quot; data-duration=&quot;4&quot; data-label=&quot;Checklist de calidad de un skill&quot; data-track-index=&quot;1&quot; data-width=&quot;1920&quot; data-height=&quot;1080&quot;>
+  <div class=&quot;frame&quot; id=&quot;a2-checklist-frame&quot;>
+    <div class=&quot;tile&quot;><img src=&quot;assets/img/aws-logo.png&quot; alt=&quot;AWS&quot;></div>
+    <div class=&quot;kicker&quot;><span class=&quot;kmark&quot;></span>Anexo · Checklist de calidad</div>
+    <div class=&quot;brand&quot;><img src=&quot;assets/img/aws_cd_logo.png&quot; alt=&quot;AWS Community Day Guatemala&quot;></div>
+    <h1 class=&quot;title&quot; data-anim style=&quot;font-size:60px&quot;>Checklist de calidad de un skill</h1>
+    <div class=&quot;row&quot; style=&quot;gap:50px&quot;>
+      <div class=&quot;list grow&quot; data-anim style=&quot;gap:18px&quot;>
+        <div class=&quot;li&quot; style=&quot;font-size:32px&quot;><span class=&quot;b&quot;>☐</span><span>2–3 casos de uso concretos definidos</span></div>
+        <div class=&quot;li&quot; style=&quot;font-size:32px&quot;><span class=&quot;b&quot;>☐</span><span>Carpeta kebab-case y archivo exactamente <code>SKILL.md</code></span></div>
+        <div class=&quot;li&quot; style=&quot;font-size:32px&quot;><span class=&quot;b&quot;>☐</span><span>Frontmatter con <code>---</code>, <code>name</code> en kebab-case</span></div>
+        <div class=&quot;li&quot; style=&quot;font-size:32px&quot;><span class=&quot;b&quot;>☐</span><span><code>description</code>: QUÉ + CUÁNDO, &amp;lt; 1024 chars, sin <code>&amp;lt; &amp;gt;</code></span></div>
+      </div>
+      <div class=&quot;list grow&quot; data-anim style=&quot;gap:18px&quot;>
+        <div class=&quot;li&quot; style=&quot;font-size:32px&quot;><span class=&quot;b&quot;>☐</span><span>Instrucciones accionables, ejemplos y troubleshooting</span></div>
+        <div class=&quot;li&quot; style=&quot;font-size:32px&quot;><span class=&quot;b&quot;>☐</span><span>Referencias enlazadas desde el SKILL.md</span></div>
+        <div class=&quot;li&quot; style=&quot;font-size:32px&quot;><span class=&quot;b&quot;>☐</span><span>Probado con obvias, paráfrasis y temas no relacionados</span></div>
+        <div class=&quot;li&quot; style=&quot;font-size:32px&quot;><span class=&quot;b&quot;>☐</span><span>Versión actualizada en <code>metadata</code> tras cada iteración</span></div>
+      </div>
+    </div>
+    <div class=&quot;foot&quot;><span class=&quot;fnum&quot;>ANEXO</span><span class=&quot;fsep&quot;>·</span>Scripts y CLIs → herramientas AI-native</div>
+  </div>
+</div>
+      <div id=&quot;tl-pad&quot; aria-hidden=&quot;true&quot;></div>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo(&quot;#s01-portada [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 0.10);
+      tl.fromTo(&quot;#s01b-patrocinadores [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 4.10);
+      tl.fromTo(&quot;#s02-fomo [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 8.10);
+      tl.fromTo(&quot;#s03-realidad [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 12.10);
+      tl.fromTo(&quot;#s03-realidad [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 14.05);
+      tl.fromTo(&quot;#s04-antipatron [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 15.10);
+      tl.fromTo(&quot;#s04-antipatron [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 17.05);
+      tl.fromTo(&quot;#s05-idea [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 18.10);
+      tl.fromTo(&quot;#s05-idea [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 20.05);
+      tl.fromTo(&quot;#s05-idea [data-step='2']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 21.05);
+      tl.fromTo(&quot;#s06-pilares [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 22.10);
+      tl.fromTo(&quot;#s06-pilares [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 24.05);
+      tl.fromTo(&quot;#s06-pilares [data-step='2']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 25.05);
+      tl.fromTo(&quot;#s06-pilares [data-step='3']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 26.05);
+      tl.fromTo(&quot;#s06-pilares [data-step='4']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 27.05);
+      tl.fromTo(&quot;#s07-antes-despues [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 28.10);
+      tl.fromTo(&quot;#s07-antes-despues [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 30.05);
+      tl.fromTo(&quot;#s07-antes-despues [data-dim='1']&quot;, { opacity: 1 }, { opacity: 0.35, duration: 0.4, ease: &quot;power2.out&quot; }, 30.05);
+      tl.fromTo(&quot;#s10-casos-uso [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 31.10);
+      tl.fromTo(&quot;#s08-determinista [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 35.10);
+      tl.fromTo(&quot;#s08-determinista [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 37.05);
+      tl.fromTo(&quot;#s09-herramientas [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 38.10);
+      tl.fromTo(&quot;#s11-trigger [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 42.10);
+      tl.fromTo(&quot;#s11-trigger [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 44.05);
+      tl.fromTo(&quot;#s12-frontmatter [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 45.10);
+      tl.fromTo(&quot;#s12-frontmatter [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 47.05);
+      tl.fromTo(&quot;#s13-ejemplos [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 48.10);
+      tl.fromTo(&quot;#s14-troubleshooting [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 52.10);
+      tl.fromTo(&quot;#s14-troubleshooting [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 54.05);
+      tl.fromTo(&quot;#s15-anatomia [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 55.10);
+      tl.fromTo(&quot;#s15-anatomia [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 57.05);
+      tl.fromTo(&quot;#s16-progressive [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 58.10);
+      tl.fromTo(&quot;#s16-progressive [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 60.05);
+      tl.fromTo(&quot;#s16-progressive [data-step='2']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 61.05);
+      tl.fromTo(&quot;#s16-progressive [data-step='3']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 62.05);
+      tl.fromTo(&quot;#s17-pruebas [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 63.10);
+      tl.fromTo(&quot;#s17-pruebas [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 65.05);
+      tl.fromTo(&quot;#s17-pruebas [data-step='2']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 66.05);
+      tl.fromTo(&quot;#s18-pokecli [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 67.10);
+      tl.fromTo(&quot;#s19-pokecli-skill [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 71.10);
+      tl.fromTo(&quot;#s19-pokecli-skill [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 73.05);
+      tl.fromTo(&quot;#s19-pokecli-skill [data-step='2']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 74.05);
+      tl.fromTo(&quot;#s19-pokecli-skill [data-step='3']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 75.05);
+      tl.fromTo(&quot;#s19-pokecli-skill [data-step='4']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 76.05);
+      tl.fromTo(&quot;#s20-demo [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 77.10);
+      tl.fromTo(&quot;#s21-industria [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 81.10);
+      tl.fromTo(&quot;#s21-industria [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 83.05);
+      tl.fromTo(&quot;#s22-mcp-vs-cli [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 84.10);
+      tl.fromTo(&quot;#s22-mcp-vs-cli [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 86.05);
+      tl.fromTo(&quot;#s23-decision [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 87.10);
+      tl.fromTo(&quot;#s23-decision [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 89.05);
+      tl.fromTo(&quot;#s23-decision [data-step='2']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 90.05);
+      tl.fromTo(&quot;#s23-decision [data-step='3']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 91.05);
+      tl.fromTo(&quot;#s23-decision [data-step='4']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 92.05);
+      tl.fromTo(&quot;#s23-decision [data-step='5']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 93.05);
+      tl.fromTo(&quot;#s24-banguat-soap [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 94.10);
+      tl.fromTo(&quot;#s25-arquitectura [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 98.10);
+      tl.fromTo(&quot;#s25-arquitectura [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 100.05);
+      tl.fromTo(&quot;#s25-arquitectura [data-step='2']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 101.05);
+      tl.fromTo(&quot;#s26-banguat-cli [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 102.10);
+      tl.fromTo(&quot;#s27-banguat-accion [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 106.10);
+      tl.fromTo(&quot;#s27-banguat-accion [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 108.05);
+      tl.fromTo(&quot;#s28-tarea [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 109.10);
+      tl.fromTo(&quot;#s28-tarea [data-step='1']&quot;, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: &quot;power2.out&quot;, stagger: 0.04 }, 111.05);
+      tl.fromTo(&quot;#s29-mensaje [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 112.10);
+      tl.fromTo(&quot;#s30-gracias [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 116.10);
+      tl.fromTo(&quot;#s31-organizadores [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 120.10);
+      tl.fromTo(&quot;#a1-faq [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 124.10);
+      tl.fromTo(&quot;#a2-checklist [data-anim]&quot;, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: &quot;power3.out&quot;, stagger: 0.08 }, 128.10);
+      // El timeline debe cubrir toda la duración del deck (adaptador directo de &quot;present&quot;).
+      tl.fromTo(&quot;#tl-pad&quot;, { opacity: 0 }, { opacity: 0.01, duration: 0.01 }, 131.99);
+      window.__timelines[&quot;deck&quot;] = tl;
+
+      // --- Modo &quot;present&quot; sin engine: visibilidad por playhead + transiciones de navegación ---
+      (function () {
+        var SCENES = [{&quot;id&quot;:&quot;s01-portada&quot;,&quot;start&quot;:0,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s01b-patrocinadores&quot;,&quot;start&quot;:4,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s02-fomo&quot;,&quot;start&quot;:8,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s03-realidad&quot;,&quot;start&quot;:12,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s04-antipatron&quot;,&quot;start&quot;:15,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s05-idea&quot;,&quot;start&quot;:18,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s06-pilares&quot;,&quot;start&quot;:22,&quot;duration&quot;:6},{&quot;id&quot;:&quot;s07-antes-despues&quot;,&quot;start&quot;:28,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s10-casos-uso&quot;,&quot;start&quot;:31,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s08-determinista&quot;,&quot;start&quot;:35,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s09-herramientas&quot;,&quot;start&quot;:38,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s11-trigger&quot;,&quot;start&quot;:42,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s12-frontmatter&quot;,&quot;start&quot;:45,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s13-ejemplos&quot;,&quot;start&quot;:48,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s14-troubleshooting&quot;,&quot;start&quot;:52,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s15-anatomia&quot;,&quot;start&quot;:55,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s16-progressive&quot;,&quot;start&quot;:58,&quot;duration&quot;:5},{&quot;id&quot;:&quot;s17-pruebas&quot;,&quot;start&quot;:63,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s18-pokecli&quot;,&quot;start&quot;:67,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s19-pokecli-skill&quot;,&quot;start&quot;:71,&quot;duration&quot;:6},{&quot;id&quot;:&quot;s20-demo&quot;,&quot;start&quot;:77,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s21-industria&quot;,&quot;start&quot;:81,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s22-mcp-vs-cli&quot;,&quot;start&quot;:84,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s23-decision&quot;,&quot;start&quot;:87,&quot;duration&quot;:7},{&quot;id&quot;:&quot;s24-banguat-soap&quot;,&quot;start&quot;:94,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s25-arquitectura&quot;,&quot;start&quot;:98,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s26-banguat-cli&quot;,&quot;start&quot;:102,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s27-banguat-accion&quot;,&quot;start&quot;:106,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s28-tarea&quot;,&quot;start&quot;:109,&quot;duration&quot;:3},{&quot;id&quot;:&quot;s29-mensaje&quot;,&quot;start&quot;:112,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s30-gracias&quot;,&quot;start&quot;:116,&quot;duration&quot;:4},{&quot;id&quot;:&quot;s31-organizadores&quot;,&quot;start&quot;:120,&quot;duration&quot;:4},{&quot;id&quot;:&quot;a1-faq&quot;,&quot;start&quot;:124,&quot;duration&quot;:4},{&quot;id&quot;:&quot;a2-checklist&quot;,&quot;start&quot;:128,&quot;duration&quot;:4}];
+        var FRAGS = {&quot;s03-realidad&quot;:[13.5,14.5],&quot;s04-antipatron&quot;:[16.5,17.5],&quot;s05-idea&quot;:[19.5,20.5,21.5],&quot;s06-pilares&quot;:[23.5,24.5,25.5,26.5,27.5],&quot;s07-antes-despues&quot;:[29.5,30.5],&quot;s08-determinista&quot;:[36.5,37.5],&quot;s11-trigger&quot;:[43.5,44.5],&quot;s12-frontmatter&quot;:[46.5,47.5],&quot;s14-troubleshooting&quot;:[53.5,54.5],&quot;s15-anatomia&quot;:[56.5,57.5],&quot;s16-progressive&quot;:[59.5,60.5,61.5,62.5],&quot;s17-pruebas&quot;:[64.5,65.5,66.5],&quot;s19-pokecli-skill&quot;:[72.5,73.5,74.5,75.5,76.5],&quot;s21-industria&quot;:[82.5,83.5],&quot;s22-mcp-vs-cli&quot;:[85.5,86.5],&quot;s23-decision&quot;:[88.5,89.5,90.5,91.5,92.5,93.5],&quot;s25-arquitectura&quot;:[99.5,100.5,101.5],&quot;s27-banguat-accion&quot;:[107.5,108.5],&quot;s28-tarea&quot;:[110.5,111.5]};
+        var TOTAL = 132;
+        var els = SCENES.map(function (s) { return document.getElementById(s.id); });
+        var lastScene = null, lastStep = -1;
+        function activeIndex(t) {
+          for (var i = 0; i < SCENES.length; i++) {
+            var s = SCENES[i];
+            if (t >= s.start &amp;&amp; (t < s.start + s.duration || i === SCENES.length - 1)) return i;
+          }
+          return 0;
+        }
+        function stepOf(id, t) {
+          var f = FRAGS[id]; if (!f) return 0;
+          var k = 0; for (var i = 0; i < f.length; i++) if (t >= f[i] - 0.001) k = i;
+          return k;
+        }
+        function update() {
+          var t = tl.time();
+          var idx = activeIndex(t);
+          for (var i = 0; i < els.length; i++) {
+            var on = i === idx;
+            els[i].style.visibility = on ? &quot;visible&quot; : &quot;hidden&quot;;
+            els[i].style.pointerEvents = on ? &quot;auto&quot; : &quot;none&quot;;
+          }
+          var id = SCENES[idx].id;
+          var step = stepOf(id, t);
+          if (!window.__hf) {
+            if (lastScene !== null &amp;&amp; id !== lastScene) {
+              gsap.fromTo(&quot;#&quot; + id + &quot;-frame&quot;, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: &quot;power2.out&quot;, overwrite: true });
+              gsap.fromTo(&quot;#&quot; + id + &quot; [data-anim]&quot;, { y: 18 }, { y: 0, duration: 0.45, ease: &quot;power3.out&quot;, stagger: 0.05, overwrite: &quot;auto&quot; });
+            } else if (id === lastScene &amp;&amp; step > lastStep) {
+              for (var k = lastStep + 1; k <= step; k++) {
+                var revealed = document.querySelectorAll(&quot;#&quot; + id + &quot; [data-step='&quot; + k + &quot;']&quot;);
+                if (revealed.length) gsap.fromTo(revealed, { y: 16 }, { y: 0, duration: 0.4, ease: &quot;power3.out&quot;, stagger: 0.05, overwrite: &quot;auto&quot; });
+              }
+            }
+          }
+          lastScene = id; lastStep = step;
+        }
+        update();
+        if (!window.__hf) {
+          tl.eventCallback(&quot;onUpdate&quot;, update);
+          var post = function () {
+            if (window.__hf) return;
+            parent.postMessage({ source: &quot;hf-preview&quot;, type: &quot;timeline&quot;, durationInFrames: Math.ceil(TOTAL * 30), scenes: SCENES }, &quot;*&quot;);
+          };
+          if (document.readyState === &quot;complete&quot;) setTimeout(post, 300);
+          else window.addEventListener(&quot;load&quot;, function () { setTimeout(post, 300); });
+        }
+      })();
+    </script>
+  </body>
+</html>
+"></hyperframes-player>
+      <script type="application/hyperframes-slideshow+json">
+{
+  "slides": [
+    {
+      "sceneId": "s01-portada",
+      "notes": "[BLOQUE 1 · APERTURA ≈5 min]\n\n\"Buenas, gracias por estar aquí. Hoy no vengo a venderles el framework de agentes más nuevo ni a pedirles que reescriban su stack. Vengo a hablarles de algo que ya tienen en su laptop: esos scripts y CLIs que usan todos los días, y de cómo enseñarle a un agente de IA a usarlos de forma correcta y repetible.\"\n\nHilo conductor: No necesitas un MCP ni un framework gigante para que la IA te ayude en producción. Necesitas herramientas deterministas y un buen manual para el agente."
+    },
+    {
+      "sceneId": "s01b-patrocinadores",
+      "notes": "\"Antes de empezar, un agradecimiento a los patrocinadores que hacen posible el AWS Community Day Guatemala: Universidad Landívar, AWS, Banco Industrial, JetBrains, GBM, proticket.io, HTEC e Improving. Gracias por apoyar a la comunidad.\""
+    },
+    {
+      "sceneId": "s02-fomo",
+      "notes": "\"Levanten la mano con honestidad: ¿quién ha sentido en los últimos meses que si no está construyendo un servidor MCP o montando un framework de agentes, ya se quedó atrás?\" [pausa, contar manos]\n\n\"Tranquilos, no están solos. Cada semana sale algo nuevo, y es fácil sentir que lo que sabemos hacer ya no sirve. Spoiler: sí sirve, y mucho.\"\n\nNOTA: Deja que la audiencia responda. Si muchos levantan la mano, úsalo: \"Perfecto, esta charla es para ustedes\"."
+    },
+    {
+      "sceneId": "s03-realidad",
+      "notes": "\"Segunda pregunta. Cuando producción se cae, cuando hay que dar soporte rápido o cuando el jefe pide un reporte que la plataforma no genera... ¿qué es lo primero que hacemos?\"\n\n[esperar respuestas: 'reviso logs', 'abro la consola', 'corro un query', 'hago un script'] → AVANZA para mostrar las respuestas.\n\n\"Exacto. Nadie dice 'voy a construir un servidor MCP'. Abrimos la terminal, corremos un query, armamos un script rápido en Python o Bash.\"",
+      "fragments": [
+        13.5,
+        14.5
+      ]
+    },
+    {
+      "sceneId": "s04-antipatron",
+      "notes": "\"Y cuando metemos IA, normalmente pasa esto: copiamos logs, pegamos un CSV, le pedimos al modelo que 'genere el reporte' o 'encuentre el error'. El modelo hace su mejor esfuerzo con lo que le dimos... que casi siempre es incompleto.\"\n\nAVANZA → etiquetas rojas.\n\n\"Y lo peor: si mañana pedimos lo mismo, el resultado puede ser distinto. Le estamos pidiendo al modelo que *calcule* cosas que deberían estar *programadas*.\"",
+      "fragments": [
+        16.5,
+        17.5
+      ]
+    },
+    {
+      "sceneId": "s05-idea",
+      "notes": "\"Esta es la idea de toda la charla: dejemos que el modelo haga lo que hace bien, entender la intención, decidir e interpretar, y que nuestros scripts hagan lo que hacen bien: ejecutar exactamente lo mismo cada vez.\"\n\nAVANZA → diagrama. AVANZA → SKILL.md.\n\n\"El puente entre ambos es un skill: un archivo markdown que le enseña al agente cuándo y cómo usar tu herramienta. Sin servidores, sin infraestructura nueva. Tu script de siempre, más un buen manual.\"",
+      "fragments": [
+        19.5,
+        20.5,
+        21.5
+      ]
+    },
+    {
+      "sceneId": "s06-pilares",
+      "notes": "[BLOQUE 2 · LOS 4 PILARES ≈5 min]\n\n\"Para llegar ahí propongo cuatro pasos.\" (AVANZA en cada pilar)\n\n1. \"Primero, hacer la herramienta determinista: nada de valores quemados en el código.\"\n2. \"Segundo, definir el trigger semántico: explicarle al agente en lenguaje claro cuándo debe usarla.\"\n3. \"Tercero, mostrarle el camino con ejemplos concretos.\"\n4. \"Y cuarto, empaquetar todo en un SKILL.md. Vamos uno por uno.\"",
+      "fragments": [
+        23.5,
+        24.5,
+        25.5,
+        26.5,
+        27.5
+      ]
+    },
+    {
+      "sceneId": "s07-antes-despues",
+      "notes": "\"Todos tenemos este script. El que tiene el host de producción quemado y el user_id que cambiamos a mano cada vez. Funciona para nosotros, pero un agente no puede usarlo con seguridad.\"\n\nAVANZA → Después.\n\n\"A la derecha está la misma lógica convertida en una herramienta: parámetros explícitos, ambiente explícito, formato de salida explícito. Ese pequeño cambio es el 80% del trabajo.\"",
+      "fragments": [
+        29.5,
+        30.5
+      ]
+    },
+    {
+      "sceneId": "s10-casos-uso",
+      "notes": "[BLOQUE 3 · DEEP DIVE ≈12 min]\n\n\"Antes de escribir una sola línea de código, la guía de Anthropic recomienda definir dos o tres casos de uso concretos: qué diría el usuario, qué pasos hay que seguir y cuál es el resultado esperado.\"\n\n\"Esto les da gratis los insumos de los cuatro pilares: los parámetros de los pasos se vuelven flags, las frases del usuario se vuelven el trigger, y los pasos se vuelven los ejemplos.\"\n\n\"La guía distingue dos formas de pensar un skill: problem-first, donde el usuario describe un resultado y el skill orquesta las herramientas, y tool-first, donde la herramienta ya existe y el skill aporta la experiencia para usarla bien. Un skill para su CLI es tool-first: el script ya lo tienen, lo que falta es enseñarle al agente a usarlo.\""
+    },
+    {
+      "sceneId": "s08-determinista",
+      "notes": "\"¿Qué hace que un CLI sea bueno para un agente? Curiosamente, lo mismo que lo hace bueno para un humano en un pipeline. Flags explícitos, salida en JSON para que el agente no tenga que adivinar parseando texto, errores que digan qué valores sí acepta para que corrija sin adivinar, y exit codes que digan si algo falló.\"\n\nAVANZA → las dos que la gente olvida.\n\n\"Dos que la gente olvida: no pongan prompts interactivos, porque el agente se queda colgado esperando, y para cualquier cosa que borre o modifique, --dry-run. Ustedes no quieren que un agente haga un DELETE en producción por un malentendido.\"",
+      "fragments": [
+        36.5,
+        37.5
+      ]
+    },
+    {
+      "sceneId": "s09-herramientas",
+      "notes": "\"No tienen que escribir el parsing a mano. En Python, Typer les genera el CLI a partir de los type hints de una función; Click si quieren más control; argparse si no quieren dependencias. En Node, Commander para casi todo y oclif si el CLI va a crecer mucho.\"\n\n\"Ojo: estas librerías son dependencias de su proyecto, van en el pyproject.toml o el package.json, nunca instaladas globalmente. Lo que sí se instala como herramienta es su CLI: con uvx o npx el agente puede ejecutarla sin instalación previa, y con uv tool install o npm i -g queda disponible en el PATH, cada una con sus dependencias aisladas.\""
+    },
+    {
+      "sceneId": "s11-trigger",
+      "notes": "\"El segundo pilar es el más subestimado. Un agente con varias skills disponibles decide cuál usar leyendo una descripción corta. No lee su código, no adivina. Si la descripción dice 'herramienta de reportes', el agente no tiene idea de cuándo aplica.\"\n\nAVANZA → la buena.\n\n\"La buena descripción responde dos preguntas: qué hace y cuándo usarla, con las palabras que un usuario realmente diría: 'reporte', 'ventas del mes', 'cliente'.\"",
+      "fragments": [
+        43.5,
+        44.5
+      ]
+    },
+    {
+      "sceneId": "s12-frontmatter",
+      "notes": "\"La guía de Anthropic es muy concreta aquí. La descripción tiene que decir qué hace y cuándo usarla, idealmente con las frases exactas que diría un usuario. Tiene un límite de 1024 caracteres y no admite símbolos de menor o mayor, porque ese texto termina en el system prompt del agente y podría usarse para inyectar instrucciones.\"\n\n\"El nombre va en kebab-case y debe coincidir con la carpeta. Y si su skill se activa cuando no debe, agreguen triggers negativos: díganle explícitamente cuándo NO usarla.\"\n\nAVANZA → ejemplos malos de la guía.\n\n\"Piénsenlo como el SEO de su herramienta, pero para un agente.\"",
+      "fragments": [
+        46.5,
+        47.5
+      ]
+    },
+    {
+      "sceneId": "s13-ejemplos",
+      "notes": "\"Tercer pilar: ejemplos. Los modelos aprenden muchísimo de ejemplos concretos. No basta con documentar los flags; muéstrenle la petición del usuario, el comando exacto y cómo se ve la salida.\"\n\n\"Así el agente sabe qué esperar y puede detectar cuando algo salió mal. Dos o tres ejemplos bien escogidos valen más que diez páginas de documentación.\""
+    },
+    {
+      "sceneId": "s14-troubleshooting",
+      "notes": "\"Y no se olviden del camino triste. La guía propone un formato simple: error, causa, solución. ¿Qué hace el agente si el usuario no existe? ¿Si producción no responde? Ese conocimiento lo tienen ustedes de las veces que el script falló a las 3 de la mañana.\"\n\nAVANZA → la frase.\n\n\"Y hay una frase de la guía que resume toda esta charla: el código es determinista, la interpretación del lenguaje no. Por eso Anthropic recomienda que las validaciones críticas no se dejen como instrucciones en texto, sino como un script que las haga. Eso es exactamente el pilar 1.\"\n\n\"Un detalle más de la guía: cuando el agente no sigue las instrucciones, casi siempre es porque son muy largas, ambiguas o están enterradas. Lo crítico va arriba, en pocas líneas.\"\n\nNOTA: Esta slide conecta el pilar 3 con el pilar 1; buen momento para pausar.",
+      "fragments": [
+        53.5,
+        54.5
+      ]
+    },
+    {
+      "sceneId": "s15-anatomia",
+      "notes": "\"El cuarto pilar es empaquetar. Un skill es simplemente una carpeta con un SKILL.md. Arriba, un frontmatter YAML con name y description, que es el trigger que vimos. Abajo, instrucciones en markdown. Opcionalmente, carpetas para scripts, documentación de referencia y assets.\"\n\n\"¿Y dónde vive esa carpeta? El agente la busca en un lugar fijo: dentro de .claude/skills para Claude Code o .kiro/skills para Kiro. Si la ponen en el proyecto, el skill solo existe ahí y viaja con el repo para todo el equipo; si la ponen en su carpeta personal, en ~/.claude/skills o ~/.kiro/skills, la tienen disponible en todos sus proyectos.\"\n\nAVANZA → reglas críticas.\n\n\"Ojo con los detalles que más fallan: el archivo se llama exactamente SKILL.md en mayúsculas, la carpeta en kebab-case, y no pongan un README dentro del skill: toda la documentación va en el SKILL.md o en references. El README va en la raíz del repo, para los humanos.\"\n\n\"Para CLIs, el campo compatibility es útil para declarar requisitos: 'requiere Python 3.11 y acceso a red'.\"",
+      "fragments": [
+        56.5,
+        57.5
+      ]
+    },
+    {
+      "sceneId": "s16-progressive",
+      "notes": "\"¿Por qué esto escala mejor que meter todo en el prompt? Por algo que se llama progressive disclosure.\"\n\nAVANZA (nivel 1) \"El agente solo tiene cargado el nombre y la descripción de cada skill: lo justo para decidir si aplica, sin cargar todo lo demás.\"\nAVANZA (nivel 2) \"Cuando decide usar una, lee el SKILL.md completo.\"\nAVANZA (nivel 3) \"Y si necesita más detalle, abre un archivo de referencia. Los scripts ni siquiera entran al contexto: se ejecutan y solo regresa la salida.\"\n\n\"Por eso pueden tener decenas de skills instaladas; la guía sugiere mantener el SKILL.md por debajo de cinco mil palabras y mover el detalle a references. Y algo importante: Anthropic publicó Agent Skills como estándar abierto, igual que hizo con MCP, así que el mismo skill está pensado para funcionar en otras plataformas.\"\n\nNOTA: Si mencionas qué otras herramientas ya adoptaron el estándar, verifica la lista actual antes de la charla.",
+      "fragments": [
+        59.5,
+        60.5,
+        61.5,
+        62.5
+      ]
+    },
+    {
+      "sceneId": "s17-pruebas",
+      "notes": "\"Un skill no está terminado cuando lo escriben, sino cuando lo prueban. La guía propone tres pruebas: que se active cuando debe y no cuando no debe, que funcione bien, y que realmente mejore el resultado frente a no tenerla.\"\n\nAVANZA → tabla de señales.\n\n\"Armen una lista de diez o veinte frases: unas que deberían activarlo, otras que no. La guía pone una meta de referencia: que se active en alrededor del 90% de las consultas relevantes. Y para la comparación contra no tener skill, su ejemplo es claro: sin skill, 15 mensajes de ida y vuelta, 3 llamadas fallidas y 12,000 tokens; con skill, 2 preguntas de aclaración, cero fallos y 6,000 tokens.\"\n\nAVANZA → trucos.\n\n\"Un truco muy simple: pregúntenle al agente cuándo usaría su skill; les va a repetir la descripción y ahí ven qué le falta. Y si no quieren empezar desde cero, existe un skill llamado skill-creator que les ayuda a generar y revisar el suyo.\"\n\nNOTA: Consejo de la guía: iterar sobre UNA tarea difícil hasta que el agente la resuelva, y luego convertir ese enfoque ganador en el skill.",
+      "fragments": [
+        64.5,
+        65.5,
+        66.5
+      ]
+    },
+    {
+      "sceneId": "s18-pokecli",
+      "notes": "[BLOQUE 4 · DEMO POKECLI ≈6 min]\n\n\"Hace un tiempo di una charla interna en el trabajo sobre esto mismo. La idea conectó, pero la respuesta me dejó algo claro: necesitaba un ejemplo práctico que la gente pudiera revisar y reutilizar. Ese ejemplo es pokecli.\"\n\n\"Es un CLI en Python, con Typer, que consulta PokéAPI. Es sencillo a propósito: si entienden el patrón con Pokémon, lo pueden aplicar a su base de datos, a sus logs o a su API interna.\"\n\n\"Y fíjense en la instalación: pokecli install --skills no genera nada, copia el skill que ya viene dentro del paquete a la carpeta donde el agente lo espera. Nadie necesita clonar el repo, la herramienta instalada trae su propia capa para agentes.\"\n\n\"Por defecto lo instala para Claude Code en su carpeta personal. Con --agent kiro lo instala para Kiro, y con --local queda solo en el proyecto donde están parados.\""
+    },
+    {
+      "sceneId": "s19-pokecli-skill",
+      "notes": "\"Este es el SKILL.md real de pokecli, recortado para que quepa. Fíjense cómo se ven los cuatro pilares:\" (AVANZA en cada color)\n\n1. \"En azul, el empaquetado. Y una línea que importa más de lo que parece: allowed-tools: Bash(pokecli:*). Le dice al agente que este skill puede ejecutar pokecli y nada más. Un skill enfocado no es solo comodidad, también es un límite.\"\n2. \"En amarillo, el trigger: qué hace y cuándo usarlo, con las frases que diría un usuario de verdad, como Pokemon stats o type matchups.\"\n3. \"En verde, los ejemplos: una tabla de decisión que mapea la intención del usuario al comando exacto.\"\n4. \"Y en rojo, la gramática que hace la herramienta determinista: tres patrones, get, list y search, y un solo camino por comportamiento. Nada de alias que obliguen al agente a elegir.\"\n\n\"Y fíjense en el orden: el cuerpo del skill abre con la gramática completa. La guía lo recomienda así: lo crítico, arriba.\"\n\n\"Lo que más me sorprendió: escribir este archivo expuso los huecos de la herramienta. Cuando escribí una regla sobre el costo en tokens, quedó claro que pokecli no tenía un formato de salida que valiera la pena recomendar. Así que el formato TOON salió del skill, y no al revés.\"",
+      "fragments": [
+        72.5,
+        73.5,
+        74.5,
+        75.5,
+        76.5
+      ]
+    },
+    {
+      "sceneId": "s20-demo",
+      "notes": "GUION DE LA DEMO\n1. Muestra primero el CLI solo en la terminal: pokecli --help y pokecli get pokemon pikachu. Señala la salida TOON y las pistas help[] al final, que le sugieren al agente el siguiente comando. \"Esto funciona sin IA. Es una herramienta normal.\"\n2. Abre el agente y lanza el prompt 1. Señala el momento en que DECIDE usar el skill y corre pokecli get pokemon gengar y pokecli get type ghost.\n3. Prompt 2: el agente corre pokecli get pokemon dos veces y luego interpreta los resultados.\n4. Prompt 3: el agente combina get type, moves y can-learn para algo que el CLI no hace por sí solo.\nEXTRA (si hay tiempo): can-learn responde con el exit code, if pokecli can-learn charizard fly; then echo \"sí\"; fi\n\nSPEECH (durante la demo)\n\"Fíjense: yo no le dije 'usa pokecli'. Le pregunté en lenguaje natural, leyó la descripción, decidió que este skill aplicaba, corrió el comando y me respondió con datos reales, no con lo que recuerda de su entrenamiento. Y en el tercer ejemplo pasa algo interesante: el CLI no sabe armar equipos. El agente sí. El agente decide. El script ejecuta.\"\n\nPLAN B: Graba la demo en video por si falla el internet o la API. Ten capturas listas."
+    },
+    {
+      "sceneId": "s21-industria",
+      "notes": "[BLOQUE 5 · INDUSTRIA Y MCP vs CLI ≈5 min]\n\n\"Y esto no es solo una opinión mía. Google lanzó un CLI para Workspace y deprecó su servidor MCP en favor de él. Microsoft, que tiene un MCP de Playwright muy popular, sacó también un CLI de Playwright.\"\n\nAVANZA → gh / aws / gcloud.\n\n\"¿Por qué empresas con recursos ilimitados harían esto? Porque los agentes son muy buenos usando la terminal, y un CLI le sirve al humano, al pipeline de CI y al agente al mismo tiempo.\"\n\nENLACES\n- Google Workspace CLI: https://github.com/googleworkspace/cli\n- https://dev.to/gys/not-everything-needs-mcp-what-google-workspace-cli-taught-us-about-ai-agent-architecture-2doe\n- Playwright CLI: https://github.com/microsoft/playwright-cli\n- https://dev.to/aswani25/playwright-cli-vs-playwright-mcp-which-should-you-use-with-claude-code-1olh",
+      "fragments": [
+        82.5,
+        83.5
+      ]
+    },
+    {
+      "sceneId": "s22-mcp-vs-cli",
+      "notes": "\"¿Esto significa que MCP murió? No.\"\n\nAVANZA → analogía.\n\n\"De hecho, la propia guía de Anthropic usa una analogía de cocina: MCP es la cocina profesional, la conectividad, lo que el agente puede hacer; el skill es la receta, el conocimiento de cómo debería hacerlo. Yo la extiendo un poco: MCP es una cocina industrial, muy potente, pero hay que montarla y mantenerla. Su CLI es la cocina de casa: ya la tienen, y para el día a día alcanza. Y las recetas, los skills, sirven en ambas cocinas.\"\n\n\"Ahora, MCP brilla cuando el agente no tiene una terminal, como una app web o un móvil, cuando necesitas OAuth para muchos usuarios, o cuando quieres gobernar centralmente qué puede hacer un agente en tu empresa. Pero para la mayoría de los casos del día a día de un equipo técnico (soporte, reportes, troubleshooting) un CLI con un skill es más simple, más barata en contexto y más flexible. No es uno contra otro; es escoger la herramienta correcta.\"",
+      "fragments": [
+        85.5,
+        86.5
+      ]
+    },
+    {
+      "sceneId": "s23-decision",
+      "notes": "(AVANZA una pregunta a la vez)\n\n\"Mi regla práctica: si ya tienes el script y el agente corre donde hay una terminal, empieza con un CLI y un skill. Hoy mismo. Si después necesitas exponerlo a otros clientes, no tienes que elegir: puedes tener ambos. Y eso me lleva al caso de estudio.\"",
+      "fragments": [
+        88.5,
+        89.5,
+        90.5,
+        91.5,
+        92.5,
+        93.5
+      ]
+    },
+    {
+      "sceneId": "s24-banguat-soap",
+      "notes": "[BLOQUE 6 · CASO DE ESTUDIO BANGUAT ≈6 min]\n\n\"Ahora un caso real y muy guatemalteco. El Banguat publica el tipo de cambio oficial en un servicio SOAP. Cualquiera que haya trabajado con sistemas del Estado lo reconoce al toque: SOAP puro, operaciones con nombre en español como TipoCambioDia o TipoCambioRango, y fechas en día, mes y año.\"\n\n\"Para los más jóvenes: SOAP es eso que ven en pantalla, XML envuelto en XML. Funciona, pero pídanle a un modelo que arme ese sobre a mano cada vez y van a ver cuántas veces se equivoca. Era el candidato perfecto para este patrón.\""
+    },
+    {
+      "sceneId": "s25-arquitectura",
+      "notes": "\"La decisión clave fue separar el core.\"\n\nAVANZA → core. \"Una sola librería en .NET que habla con el SOAP, parsea el XML y valida los datos. Envolví ese servicio una sola vez, bien.\"\n\nAVANZA → adaptadores. \"Encima, tres adaptadores delgados: un CLI con su skill para agentes con terminal y para humanos; un servidor MCP para clientes que no tienen shell; y una API REST versionada para que cualquier aplicación la consuma. REST y MCP quedan detrás de un gateway con YARP y límites por cliente, todo orquestado con Aspire. La lógica vive en un solo lugar: si el Banguat cambia algo, lo arreglo una vez.\"",
+      "fragments": [
+        99.5,
+        100.5,
+        101.5
+      ]
+    },
+    {
+      "sceneId": "s26-banguat-cli",
+      "notes": "\"Así se ve el CLI. Comandos cortos, flags explícitos y salida en JSON cuando la necesitas. Por defecto pinta una tabla para el humano en la terminal, y con -o json se la pasa al agente sin que tenga que raspar bordes de tabla.\"\n\n\"El skill lo escribí en inglés, igual que el código, pero el trigger nombra lo que alguien de aquí diría: Banguat, Quetzal, GTQ.\"\n\n\"Y documenté los gotchas que me fui encontrando. Un rango sin publicaciones no es un error: regresa count 0, así que el skill le dice al agente que revise count y no solo el exit code. Los códigos de moneda del Banguat no son ISO 4217, por eso el skill trae un known-currencies.md generado del mismo catálogo que usa el CLI, y la regla es clara: nunca adivines un código. Ese conocimiento es lo que evita que el agente invente una respuesta.\"\n\nNOTA: el skill se instala con banguat-exchangerates-cli skill install --scope local|user|both."
+    },
+    {
+      "sceneId": "s27-banguat-accion",
+      "notes": "\"Le pregunto al agente a cuánto estuvo el dólar la semana pasada y el promedio. Él decide usar rate history, recibe datos oficiales y hace el cálculo. En ningún momento el agente ve SOAP ni XML: eso queda dentro del CLI.\"\n\nAVANZA → lecciones.\n\n\"Lo que aprendí: trabajar sobre tecnología vieja no tiene que salir caro si pones la frontera entre lo legacy y lo nuevo en el lugar correcto desde el principio. Empezar por el CLI me obligó a diseñar bien esa interfaz, y una vez que la interfaz era buena, agregar MCP y REST fue casi trivial.\"\n\nNOTA: puedes sustituir el mock por una captura real de la conversación o hacer la mini demo en vivo.",
+      "fragments": [
+        107.5,
+        108.5
+      ]
+    },
+    {
+      "sceneId": "s28-tarea",
+      "notes": "[BLOQUE 7 · CIERRE ≈3 min]\n\n\"Les dejo una tarea concreta. El lunes escojan un solo script, ese que corren cada semana. Sáquenle los valores quemados, agréguenle salida JSON, escriban una buena descripción, dos o tres ejemplos, y guárdenlo como SKILL.md. En una tarde tienen su primera herramienta AI-native. Sin servidores, sin frameworks.\"\n\nAVANZA → pokecli.\n\n\"Y si no tienen un script a mano, usen pokecli: el QR los lleva al repo. Instálenlo, jueguen con él en la terminal y escriban su propio skill sin ver el que trae. Después compárenlo con el original: ahí van a ver qué se les escapó.\"",
+      "fragments": [
+        110.5,
+        111.5
+      ]
+    },
+    {
+      "sceneId": "s29-mensaje",
+      "notes": "\"¿Recuerdan la primera pregunta, sobre sentir que se quedaron atrás? Esos scripts que han escrito durante años, para apagar incendios y sacar reportes, son conocimiento operativo que ningún modelo trae de fábrica. Con un skill, ese conocimiento se vuelve algo que un agente puede usar de forma segura y repetible. No se quedaron atrás: ya tienen la ventaja. Solo falta enseñarle al agente a usarla.\""
+    },
+    {
+      "sceneId": "s30-gracias",
+      "notes": "\"Les dejo este QR a mi sitio, jonathanbucaro.com: ahí van a encontrar los repos, los enlaces que mencioné y la forma de contactarme. Muchas gracias. ¿Preguntas?\"\n\n[PREGUNTAS 5–10 min]\n\nCHECKLIST DE PREPARACIÓN\n- Demo de PokeCLI grabada como respaldo\n- Link oficial a la guía de buenas prácticas de skills de Anthropic\n- Confirmar que el servicio SOAP de Banguat responde el día de la charla (o tener respuestas cacheadas)\n- Fuente de terminal grande (mín. 20 pt) y tema de alto contraste\n- Recursos publicados en jonathanbucaro.com y QR probado"
+    },
+    {
+      "sceneId": "s31-organizadores",
+      "notes": "\"Y antes de irnos, un agradecimiento a quienes organizan este evento: AWS User Group Guatemala, AWS Guatemala Girls Chapter y AWS User Group El Progreso. Este Community Day existe gracias a su trabajo voluntario.\"\n\n\"Si les gustó lo que vieron hoy, escaneen el QR y únanse a la comunidad. Ahí se enteran de los próximos meetups y es el mejor lugar para seguir esta conversación.\""
+    }
+  ],
+  "slideSequences": [
+    {
+      "id": "anexo-faq",
+      "label": "Preguntas probables",
+      "slides": [
+        {
+          "sceneId": "a1-faq",
+          "notes": "Respuestas cortas para la sesión de preguntas. Usa \"Atrás\" para volver a la slide de cierre."
+        }
+      ]
+    },
+    {
+      "id": "anexo-checklist",
+      "label": "Checklist de calidad de un skill",
+      "slides": [
+        {
+          "sceneId": "a2-checklist",
+          "notes": "Resumen de la guía de Anthropic; útil como respaldo o para el repo de recursos. Usa \"Atrás\" para volver a la slide de cierre."
+        }
+      ]
+    }
+  ]
+}
+      </script>
+    </hyperframes-slideshow>
+  </body>
+</html>

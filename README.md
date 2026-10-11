@@ -18,7 +18,7 @@ git clone --depth 1 --filter=blob:none --sparse git@github.com:jebucaro/blog-cod
 cd blog-code
 
 # Download only the folder you need
-git sparse-checkout set python/Nodus
+git sparse-checkout set nodus
 ```
 
 ## 🔗 Blog Posts Index
@@ -27,7 +27,7 @@ Here's a list of all the code examples and their corresponding blog posts.
 
 | Date      | Language | Title                                                                                             | Folder                |
 |-----------|----------|---------------------------------------------------------------------------------------------------|-----------------------|
-| 2025-10   | Python   | [Create a Knowledge Graph From Text With Gemini](https://jonathanbucaro.com/blog/create-a-knowledge-graph-from-text-with-gemini/) | [Nodus](./python/Nodus) |
+| 2025-10   | Python   | [Create a Knowledge Graph From Text With Gemini](https://jonathanbucaro.com/blog/create-a-knowledge-graph-from-text-with-gemini/) | [Nodus](./nodus) |
 
 
 ## 👨‍💻 About the Author

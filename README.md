@@ -12,7 +12,10 @@ Code is organized by programming language:
 ### Using Git (Sparse Checkout)
 ```bash
 # Clone repository without downloading all files
-git clone --depth 1 --filter=blob:none --sparse git@github.com:jebucaro/blog-code.git
+git clone --depth 1 --filter=blob:none --sparse https://github.com/jebucaro/blog-code.git
+
+# Or, if you have SSH keys set up with GitHub:
+# git clone --depth 1 --filter=blob:none --sparse git@github.com:jebucaro/blog-code.git
 
 # Navigate to repository
 cd blog-code

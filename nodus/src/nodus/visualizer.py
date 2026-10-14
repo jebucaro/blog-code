@@ -1,6 +1,7 @@
 import hashlib
 import json
 import logging
+from collections.abc import Set as AbstractSet
 
 from pyvis.network import Network
 
@@ -113,7 +114,7 @@ class GraphVisualizer:
     def _build_network(
         self,
         graph: KnowledgeGraph,
-        placeholder_ids: set[str] | None = None,
+        placeholder_ids: AbstractSet[str] | None = None,
     ) -> tuple[Network, set[str]]:
         """Build a PyVis Network from a KnowledgeGraph; returns (network, rendered node types)."""
         placeholder_ids = placeholder_ids or set()
@@ -161,6 +162,9 @@ class GraphVisualizer:
                 tooltip = f"{display_label}\nType: {node.type}\nID: {node.id}"
                 if node.context:
                     tooltip += f"\n{node.context}"
+                is_placeholder = node.id in placeholder_ids
+                if is_placeholder:
+                    tooltip += "\n(inferred placeholder)"
 
                 node_options = {
                     "label": display_label,
@@ -173,9 +177,8 @@ class GraphVisualizer:
                         "background": self.theme["label_background"],
                     },
                 }
-                if node.id in placeholder_ids:
+                if is_placeholder:
                     node_options["shapeProperties"] = {"borderDashes": [5, 5]}
-                    node_options["title"] += "\n(inferred placeholder)"
 
                 try:
                     net.add_node(node.id, **node_options)
@@ -362,7 +365,7 @@ class GraphVisualizer:
     def generate_html(
         self,
         graph: KnowledgeGraph,
-        placeholder_ids: set[str] | None = None,
+        placeholder_ids: AbstractSet[str] | None = None,
     ) -> str:
         """Generate HTML visualization as a string (in-memory, no file I/O)."""
         net, types_present = self._build_network(graph, placeholder_ids)

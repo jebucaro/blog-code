@@ -72,7 +72,7 @@ This will:
 2. **Select Model**: Choose from:
    - `gemini-3.5-flash-lite` - Fastest, most cost-effective
    - `gemini-3.8-flash` - Balanced performance (default)
-   - `gemini-3.1-pro-preview` - Most capable, deepest reasoning
+   - `gemini-4-argon` - Most capable, deepest reasoning (paid tier only)
 3. **Pick a Thinking Level** (optional): "Model default" uses each model's built-in
    thinking level; Low/Medium/High trade speed for extraction quality.
    The sidebar's "Use executive summary to build knowledge graph" checkbox is **off**
@@ -173,7 +173,7 @@ The application supports three curated Gemini models:
 |-------|----------|-------|------|
 | `gemini-3.5-flash-lite` | Quick extractions, small texts | Fastest | Lowest |
 | `gemini-3.8-flash` | Balanced performance (default) | Fast | Medium |
-| `gemini-3.1-pro-preview` | Complex texts, high accuracy | Slower | Higher |
+| `gemini-4-argon` | Complex texts, high accuracy (paid tier only) | Slower | Higher |
 
 ### Visualization Themes
 

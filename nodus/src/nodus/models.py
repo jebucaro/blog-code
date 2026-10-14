@@ -58,7 +58,7 @@ class Node(BaseModel):
             "The general category of the entity, always lowercase. "
             "Must be one of: " + ", ".join(NODE_TYPES) + "."
         ),
-        json_schema_extra={"enum": NODE_TYPES},
+        json_schema_extra={"enum": [*NODE_TYPES]},
     )
     context: str | None = Field(
         default=None,

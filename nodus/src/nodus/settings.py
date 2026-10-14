@@ -7,14 +7,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 AVAILABLE_MODELS = [
     "gemini-3.5-flash-lite",
     "gemini-3.8-flash",
-    "gemini-3.1-pro-preview",
+    "gemini-4-argon",
 ]
 
 DEFAULT_MODEL = "gemini-3.8-flash"
 
 # Thinking levels the app exposes. "default" sends no thinking config so each
-# model uses its built-in default (MEDIUM on flash, HIGH on pro, MINIMAL on
-# flash-lite). MINIMAL is never offered: gemini-3.1-pro does not support it.
+# model uses its built-in default (MEDIUM on flash and argon, MINIMAL on
+# flash-lite). MINIMAL is never offered: gemini-4-argon does not support it.
 THINKING_LEVELS = ["default", "low", "medium", "high"]
 
 # Maximum input text length (characters) for extraction/summarization

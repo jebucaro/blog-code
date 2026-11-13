@@ -2,7 +2,12 @@ import pytest
 from pydantic import ValidationError
 
 from nodus.models import (
+    DOCUMENT_NODE_TYPES,
     NODE_TYPES,
+    RELATIONSHIP_TYPE_EXAMPLES,
+    SPEAKER_LINK_TYPES,
+    TRANSCRIPT_NODE_TYPES,
+    TRANSCRIPT_RELATIONSHIP_TYPE_EXAMPLES,
     KnowledgeGraph,
     Node,
     Relationship,
@@ -209,10 +214,21 @@ class TestKnowledgeGraph:
 
 
 class TestKnowledgeGraphSchema:
-    def test_node_type_enum_in_schema(self):
-        schema = KnowledgeGraph.model_json_schema()
-        node_type_schema = schema["$defs"]["Node"]["properties"]["type"]
-        assert node_type_schema["enum"] == NODE_TYPES
+    def test_document_schema_offers_only_document_types(self):
+        node_type = extraction_json_schema()["$defs"]["Node"]["properties"]["type"]
+        assert node_type["enum"] == DOCUMENT_NODE_TYPES
+        assert "action_item" not in node_type["description"]
+
+    @pytest.mark.parametrize("bad", [[], ["person", "bogus"]])
+    def test_schema_rejects_empty_or_unknown_node_types(self, bad):
+        with pytest.raises(ValueError):
+            extraction_json_schema(bad)
+
+    def test_transcript_schema_offers_all_types(self):
+        schema = extraction_json_schema(TRANSCRIPT_NODE_TYPES)
+        node_type = schema["$defs"]["Node"]["properties"]["type"]
+        assert node_type["enum"] == TRANSCRIPT_NODE_TYPES
+        assert "action_item" in node_type["description"]
 
     def test_node_type_description_uses_controlled_vocabulary(self):
         schema = KnowledgeGraph.model_json_schema()
@@ -339,3 +355,37 @@ class TestSortRelationships:
 
     def test_empty_list(self):
         assert sort_relationships([]) == []
+
+
+class TestVocabulary:
+    def test_document_types_are_the_original_nine(self):
+        assert DOCUMENT_NODE_TYPES == [
+            "person", "organization", "location", "event",
+            "concept", "product", "technology", "date", "other",
+        ]
+
+    def test_transcript_types_extend_document_types(self):
+        assert TRANSCRIPT_NODE_TYPES == [
+            *DOCUMENT_NODE_TYPES, "topic", "statement", "decision", "action_item",
+        ]
+        assert NODE_TYPES == TRANSCRIPT_NODE_TYPES
+
+    def test_transcript_relationship_types(self):
+        assert TRANSCRIPT_RELATIONSHIP_TYPE_EXAMPLES == [
+            *RELATIONSHIP_TYPE_EXAMPLES,
+            "STATED", "PROPOSED", "RAISED", "ASKED", "DECIDED",
+            "AGREED_WITH", "DISAGREED_WITH", "COMMITTED_TO", "ASSIGNED_TO", "ABOUT",
+        ]
+
+    def test_speaker_link_types_exclude_about(self):
+        assert SPEAKER_LINK_TYPES == frozenset({
+            "STATED", "PROPOSED", "RAISED", "ASKED", "DECIDED",
+            "AGREED_WITH", "DISAGREED_WITH", "COMMITTED_TO", "ASSIGNED_TO",
+        })
+
+    @pytest.mark.parametrize("node_type", ["topic", "statement", "decision", "action_item"])
+    def test_new_types_validate(self, node_type):
+        assert Node(id="x", type=node_type).type == node_type
+
+    def test_unknown_type_still_becomes_other(self):
+        assert Node(id="x", type="proposal").type == "other"

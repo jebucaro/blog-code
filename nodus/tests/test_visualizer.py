@@ -1,3 +1,5 @@
+import json
+
 from nodus.models import NODE_TYPES, KnowledgeGraph, Node, Relationship
 from nodus.settings import Settings
 from nodus.visualizer import NODE_TYPE_COLORS, GraphVisualizer
@@ -21,6 +23,11 @@ def make_visualizer(theme="dark"):
 
 
 class TestColorMap:
+    def test_colors_are_unique_per_theme(self):
+        for theme in ("dark", "light"):
+            colors = list(NODE_TYPE_COLORS[theme].values())
+            assert len(colors) == len(set(colors))
+
     def test_color_map_keys_match_node_types(self):
         for theme in ("dark", "light"):
             assert set(NODE_TYPE_COLORS[theme]) == set(NODE_TYPES)
@@ -309,3 +316,18 @@ class TestPngExport:
         assert '["person", "' in html
         assert '["organization", "' in html
         assert '["concept", "' not in html
+
+
+class TestConversationLabelWrapping:
+    def test_conversation_nodes_get_width_constraint_only(self):
+        nodes = [
+            Node(id="s1", type="statement", label="x" * 85),
+            Node(id="alice", type="person"),
+        ]
+        rels = [Relationship(id="r1", type="STATED", source_node_id="alice", target_node_id="s1")]
+        html = make_visualizer().generate_html(KnowledgeGraph(nodes=nodes, relationships=rels))
+        nodes_json = html.split("nodes = new vis.DataSet(")[1].split(");")[0]
+        data = json.loads(nodes_json)
+        by_id = {n["id"]: n for n in data}
+        assert by_id["s1"]["widthConstraint"] == {"maximum": 180}
+        assert "widthConstraint" not in by_id["alice"]

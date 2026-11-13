@@ -1,0 +1,115 @@
+{
+  "$defs": {
+    "Node": {
+      "description": "Represents an entity or concept in the knowledge graph.",
+      "properties": {
+        "context": {
+          "description": "A short (one sentence, under 200 characters) supporting detail from the text that isn't captured by label/type alone - e.g. a date, number, quote fragment, or key nuance. Use an empty string when there's nothing beyond the bare fact.",
+          "title": "Context",
+          "type": "string"
+        },
+        "id": {
+          "description": "The unique, standardized identifier for the entity. It MUST be lowercase and use underscores (_) as separators. For numbers like age, it MUST be prefixed (e.g., 'age_34'). MUST NOT be an integer.",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The human-readable, capitalized name of the entity. If not provided, it will be auto-generated from the id.",
+          "title": "Label"
+        },
+        "type": {
+          "description": "The general category of the entity, always lowercase. Must be one of: person, organization, location, event, concept, product, technology, date, other.",
+          "enum": [
+            "person",
+            "organization",
+            "location",
+            "event",
+            "concept",
+            "product",
+            "technology",
+            "date",
+            "other"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "context"
+      ],
+      "title": "Node",
+      "type": "object"
+    },
+    "Relationship": {
+      "description": "A relationship between two nodes in the knowledge graph.",
+      "properties": {
+        "context": {
+          "description": "A short (one sentence, under 200 characters) supporting detail about this specific relationship - e.g. 'since 2019, as VP of Engineering' - when the text provides one. Use an empty string when there's nothing beyond the bare relationship fact.",
+          "title": "Context",
+          "type": "string"
+        },
+        "id": {
+          "description": "Unique human-readable identifier for the relationship",
+          "title": "Id",
+          "type": "string"
+        },
+        "source_node_id": {
+          "description": "ID of the source node",
+          "title": "Source Node Id",
+          "type": "string"
+        },
+        "target_node_id": {
+          "description": "ID of the target node",
+          "title": "Target Node Id",
+          "type": "string"
+        },
+        "type": {
+          "description": "Relationship type: a general, timeless, UPPERCASE verb phrase with underscores (e.g., 'WORKS_AT', 'LOCATED_IN').",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "source_node_id",
+        "target_node_id",
+        "context"
+      ],
+      "title": "Relationship",
+      "type": "object"
+    }
+  },
+  "description": "A knowledge graph consisting of nodes and relationships.",
+  "properties": {
+    "nodes": {
+      "description": "List of nodes in the knowledge graph",
+      "items": {
+        "$ref": "#/$defs/Node"
+      },
+      "title": "Nodes",
+      "type": "array"
+    },
+    "relationships": {
+      "description": "List of relationships in the knowledge graph",
+      "items": {
+        "$ref": "#/$defs/Relationship"
+      },
+      "title": "Relationships",
+      "type": "array"
+    }
+  },
+  "title": "KnowledgeGraph",
+  "type": "object"
+}

@@ -6,6 +6,7 @@ A knowledge graph extraction and visualization system powered by Google Gemini A
 
 - **AI-Powered Extraction**: Uses Google Gemini API to intelligently extract nodes (entities) and relationships from text
 - **Interactive Visualizations**: Creates dynamic, explorable graph visualizations using PyVis
+- **Transcript Mode**: Turn meetings, videos and podcasts into a graph of who said what, with decisions and action items
 - **Multiple Model Support**: Choose from curated Gemini models (Flash-Lite, Hydrogen, Carbon) based on your needs
 - **File Upload**: Load text files directly or paste text manually
 - **Export Capabilities**: Download visualizations as HTML or raw data as JSON
@@ -46,6 +47,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 # Optional (defaults shown)
 GEMINI_MODEL=gemini-4-hydrogen
 THINKING_LEVEL=default
+INPUT_TYPE=document
 VIZ_THEME=dark
 ```
 
@@ -73,7 +75,11 @@ This will:
    - `gemini-3.5-flash-lite` - Fastest, most cost-effective
    - `gemini-4-hydrogen` - Balanced performance (default)
    - `gemini-4-carbon` - Most capable, deepest reasoning (paid tier only)
-3. **Pick a Thinking Level** (optional): "Model default" uses each model's built-in
+3. **Choose an Input Type**: `Document` (default) or `Transcript (meeting, video,
+   podcast)`. See [Transcripts](#transcripts). In Transcript mode the "Use executive
+   summary to build knowledge graph" checkbox is disabled, because the summary drops
+   who said what; the summary itself is still shown.
+4. **Pick a Thinking Level** (optional): "Model default" uses each model's built-in
    thinking level; Low/Medium/High trade speed for extraction quality. The built-in
    level is High on `gemini-4-hydrogen`, Medium on `gemini-4-carbon` and Minimal on
    `gemini-3.5-flash-lite`. The setting applies to knowledge graph extraction only:
@@ -83,11 +89,11 @@ This will:
    by default: the graph is built from your full text, which keeps the dates, numbers,
    and reasons that fill each node's and relationship's `context`. Turn it on for a
    higher-level graph built from the summary (most fine detail is lost that way).
-4. **Input Text**: Either:
+5. **Input Text**: Either:
    - Upload a text file (`.txt`, `.md`) using the file uploader
    - Paste text directly into the text area
-5. **Extract**: Click "Extract" to generate the knowledge graph
-6. **View Results**: Explore four tabs:
+6. **Extract**: Click "Extract" to generate the knowledge graph
+7. **View Results**: Explore four tabs:
    - **Summary**: Document summary
    - **Graph**: Interactive graph (drag, zoom, hover for details). Use the
      relationship-type filter (bottom-left) to show or hide edges by type, with
@@ -102,8 +108,8 @@ This will:
    relationship list listed separately, so you can see where each claim came from. The quotes are
    written by the model and can occasionally be inexact, so check anything important
    against the source.
-7. **Export**: Download HTML visualization or JSON data
-8. **Clear**: Reset everything and start over
+8. **Export**: Download HTML visualization or JSON data
+9. **Clear**: Reset everything and start over
 
 ### Example Text
 
@@ -153,7 +159,7 @@ Nodus/
 
 ### 3. Visualization Layer (`visualizer.py`)
 - Creates interactive HTML visualizations using PyVis
-- Consistent color-coding by node type (MD5 hash-based)
+- Consistent color-coding: a fixed color per node type (per theme); relationship colors are derived from a hash of the type name
 - Configurable themes (dark/light), physics simulation
 - Filters self-referencing and invalid relationships
 - Relationship-type filter overlay to show/hide edges by type without moving nodes
@@ -178,6 +184,59 @@ The application supports three curated Gemini models:
 | `gemini-3.5-flash-lite` | Quick extractions, small texts | Fastest | Lowest |
 | `gemini-4-hydrogen` | Balanced performance (default) | Fast | Medium |
 | `gemini-4-carbon` | Complex texts, high accuracy (paid tier only) | Slower | Highest |
+
+### Transcripts
+
+Choose `Transcript (meeting, video, podcast)` as the input type (or set
+`INPUT_TYPE=transcript`) when the text is a conversation or a talk. The result is an
+overview, not a record of every sentence: it aims for roughly 10 to 30 statements, decisions and
+action items for an hour of conversation.
+
+The graph contains:
+
+- People, with their role, title and company when the transcript states them. Who a
+  person is comes only from the transcript.
+- Important statements, decisions and action items as their own nodes, linked to the
+  speaker (`STATED`, `PROPOSED`, `RAISED`, `ASKED`, `DECIDED`, `COMMITTED_TO`, and so on)
+  and, with `ABOUT`, to what they concern.
+- Timestamps, when the transcript has them, at the end of a node's detail line (the
+  node's `context`).
+
+Nodus works out how speakers are marked from the text; no fixed format is required.
+
+| Transcript | Who said what | Who a person is |
+|---|---|---|
+| Any speaker marks (`Maria:`, `[Speaker 2]`, `>> DAN`) | Works | Works when introduced or addressed by name; otherwise the label is kept |
+| Timeline only, one speaker | Works; everything belongs to the presenter | Works if they introduce themselves |
+| Timeline only, several speakers | Partial; only where the conversation makes it obvious | Works for anyone introduced or named |
+
+Nodus never guesses a speaker. An important statement whose speaker cannot be
+identified is kept, linked to its topic, and marked `speaker not identified` in its
+detail line. A speaker link is kept only if both of its ends match an existing node
+by id or by name (treating case, spaces and punctuation as equivalent; no fuzzy matching). Links
+that do not are dropped during graph repair and counted in the repair caption
+("dropped N unverifiable speaker link(s)").
+
+Transcript mode adds four node types:
+
+- `topic`: a subject the conversation spends real time on
+- `statement`: an important claim, proposal, concern, question or fact
+- `decision`: something the group settled
+- `action_item`: something someone undertook to do
+
+Document mode never uses these types.
+
+Known limits:
+
+- Names are only as good as the transcription; a misspelled name becomes a separate or
+  wrong person.
+- With no speaker marks and several speakers, attribution is partial at best.
+- A name that is never spoken in the recording is never known.
+- The 100,000-character input cap is about an hour of speech.
+- Chat answers from the transcript text and is not bound by the graph's attribution rule; on
+  transcripts without speaker marks, check who-said-what answers against the recording.
+
+Sample transcripts to try are in `tests/fixtures/transcript_*.txt`.
 
 ### Visualization Themes
 

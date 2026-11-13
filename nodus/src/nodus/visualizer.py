@@ -10,6 +10,9 @@ from nodus.settings import Settings
 
 logger = logging.getLogger(__name__)
 
+# Conversation node labels are long sentences; cap their width so vis.js wraps them.
+WRAPPED_LABEL_NODE_TYPES = frozenset({"statement", "decision", "action_item"})
+
 # Semantic color per controlled node type, tuned per background.
 # Keys must exactly match NODE_TYPES in nodus.models (guarded by tests).
 NODE_TYPE_COLORS = {
@@ -23,6 +26,10 @@ NODE_TYPE_COLORS = {
         "technology": "#22d3ee",
         "date": "#94a3b8",
         "other": "#9ca3af",
+        "topic": "#2dd4bf",
+        "statement": "#fb923c",
+        "decision": "#a3e635",
+        "action_item": "#e879f9",
     },
     "light": {
         "person": "#2563eb",
@@ -34,6 +41,10 @@ NODE_TYPE_COLORS = {
         "technology": "#0891b2",
         "date": "#64748b",
         "other": "#6b7280",
+        "topic": "#0d9488",
+        "statement": "#ea580c",
+        "decision": "#65a30d",
+        "action_item": "#c026d3",
     },
 }
 
@@ -177,6 +188,8 @@ class GraphVisualizer:
                         "background": self.theme["label_background"],
                     },
                 }
+                if node_type in WRAPPED_LABEL_NODE_TYPES:
+                    node_options["widthConstraint"] = {"maximum": 180}
                 if is_placeholder:
                     node_options["shapeProperties"] = {"borderDashes": [5, 5]}
 

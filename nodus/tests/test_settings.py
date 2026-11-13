@@ -1,6 +1,12 @@
 import pytest
 
-from nodus.settings import AVAILABLE_MODELS, DEFAULT_MODEL, THINKING_LEVELS, Settings
+from nodus.settings import (
+    AVAILABLE_MODELS,
+    DEFAULT_MODEL,
+    INPUT_TYPES,
+    THINKING_LEVELS,
+    Settings,
+)
 
 
 class TestModelLineup:
@@ -57,3 +63,27 @@ class TestSettings:
 
     def test_thinking_levels_constant(self):
         assert THINKING_LEVELS == ["default", "low", "medium", "high"]
+
+
+class TestInputType:
+    def test_input_types_constant(self):
+        assert INPUT_TYPES == ["document", "transcript"]
+
+    def test_default_is_document(self, monkeypatch):
+        monkeypatch.delenv("INPUT_TYPE", raising=False)
+        assert Settings(_env_file=None).input_type == "document"
+
+    @pytest.mark.parametrize("value", ["document", "transcript"])
+    def test_valid_values_accepted(self, value):
+        assert Settings(_env_file=None, input_type=value).input_type == value
+
+    def test_value_is_normalized(self):
+        assert Settings(_env_file=None, input_type=" Transcript ").input_type == "transcript"
+
+    def test_env_var_is_read(self, monkeypatch):
+        monkeypatch.setenv("INPUT_TYPE", "TRANSCRIPT")
+        assert Settings(_env_file=None).input_type == "transcript"
+
+    def test_invalid_value_rejected_with_allowed_values(self):
+        with pytest.raises(ValueError, match="document.*transcript"):
+            Settings(_env_file=None, input_type="meeting")

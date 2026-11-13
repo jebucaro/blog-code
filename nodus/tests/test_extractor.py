@@ -1,10 +1,16 @@
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from nodus.errors import MissingAPIKeyError
-from nodus.extractor import GeminiExtractor
-from nodus.models import ExecutiveSummary, KnowledgeGraph, extraction_json_schema
+from nodus.extractor import SYSTEM_PROMPT, TRANSCRIPT_SYSTEM_PROMPT, GeminiExtractor
+from nodus.models import (
+    TRANSCRIPT_NODE_TYPES,
+    ExecutiveSummary,
+    KnowledgeGraph,
+    extraction_json_schema,
+)
 from nodus.settings import Settings
 
 
@@ -13,6 +19,9 @@ def make_extractor(**settings_overrides) -> GeminiExtractor:
     settings = Settings(_env_file=None, gemini_api_key="test-key", **settings_overrides)
     with patch("nodus.extractor.genai.Client"):
         return GeminiExtractor(settings)
+
+FIXTURES = Path(__file__).parent / "fixtures"
+TRANSCRIPTS = sorted(FIXTURES.glob("transcript_*.txt"))
 
 
 class TestInit:
@@ -231,3 +240,48 @@ class TestExtractionSource:
         extractor = self._extractor()
         extractor.extract_with_summary("The full original text.", use_summary_for_kg=True)
         extractor.extract.assert_called_once_with("Short summary.")
+
+
+class TestInputType:
+    def test_document_mode_uses_document_prompt_and_schema(self):
+        extractor = make_extractor()
+        assert extractor.kg_config["system_instruction"] == SYSTEM_PROMPT
+        assert extractor.kg_config["response_format"]["schema"] == extraction_json_schema()
+
+    def test_transcript_mode_uses_transcript_prompt_and_schema(self):
+        extractor = make_extractor(input_type="transcript")
+        assert extractor.kg_config["system_instruction"] == TRANSCRIPT_SYSTEM_PROMPT
+        assert extractor.kg_config["response_format"]["schema"] == extraction_json_schema(
+            TRANSCRIPT_NODE_TYPES
+        )
+
+    def test_summary_config_is_the_same_in_both_modes(self):
+        assert (
+            make_extractor().summary_config
+            == make_extractor(input_type="transcript").summary_config
+        )
+
+    def test_cache_key_differs_by_input_type(self):
+        a = make_extractor()._cache_key("hello", "kg")
+        b = make_extractor(input_type="transcript")._cache_key("hello", "kg")
+        assert a != b
+
+    def test_three_transcript_fixtures_exist(self):
+        assert len(TRANSCRIPTS) == 3
+
+    @pytest.mark.parametrize("path", TRANSCRIPTS, ids=lambda p: p.stem)
+    def test_transcript_mode_never_builds_graph_from_summary(self, path):
+        text = path.read_text(encoding="utf-8")
+        extractor = make_extractor(input_type="transcript")
+        extractor.summarize = MagicMock(return_value=ExecutiveSummary(summary="SUMMARY TEXT"))
+        extractor.extract = MagicMock(return_value=KnowledgeGraph())
+        extractor.extract_with_summary(text, use_summary_for_kg=True, show_summary=True)
+        extractor.extract.assert_called_once_with(text)
+        extractor.summarize.assert_called_once_with(text)
+
+    def test_document_mode_still_builds_graph_from_summary_when_asked(self):
+        extractor = make_extractor()
+        extractor.summarize = MagicMock(return_value=ExecutiveSummary(summary="SUMMARY TEXT"))
+        extractor.extract = MagicMock(return_value=KnowledgeGraph())
+        extractor.extract_with_summary("full text", use_summary_for_kg=True)
+        extractor.extract.assert_called_once_with("SUMMARY TEXT")

@@ -4,7 +4,7 @@ import re
 
 from pydantic import BaseModel, Field
 
-from nodus.models import KnowledgeGraph, Node, Relationship
+from nodus.models import SPEAKER_LINK_TYPES, KnowledgeGraph, Node, Relationship
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,7 @@ class RepairReport(BaseModel):
         description="IDs of placeholder nodes created for unmatched endpoints.",
     )
     dropped_self_loops: int = 0
+    dropped_speaker_links: int = 0
     isolated_nodes: list[str] = Field(
         default_factory=list,
         description="IDs of nodes with no relationships after repair.",
@@ -35,6 +36,7 @@ class RepairReport(BaseModel):
             self.remapped_endpoints
             or self.placeholder_nodes
             or self.dropped_self_loops
+            or self.dropped_speaker_links
             or self.isolated_nodes
         )
 
@@ -44,13 +46,23 @@ def _normalize_id(ref: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", ref.strip().lower()).strip("_")
 
 
-def repair_graph(graph: KnowledgeGraph) -> tuple[KnowledgeGraph, RepairReport]:
+def repair_graph(
+    graph: KnowledgeGraph, protect_speaker_links: bool = False
+) -> tuple[KnowledgeGraph, RepairReport]:
     """Fix dangling relationship endpoints instead of letting them be silently dropped.
 
     Resolution order per endpoint: exact node id -> normalized id/label match ->
     fuzzy match (difflib, cutoff FUZZY_MATCH_CUTOFF) -> new placeholder node
     (type 'other'). Self-loops are dropped and counted; isolated nodes are kept
     and reported. The input graph is never mutated.
+
+    With protect_speaker_links, a relationship whose type is a speaker link
+    (SPEAKER_LINK_TYPES, compared upper-cased) is resolved strictly: exact id,
+    then normalized id/label match. If either endpoint does not resolve, the
+    relationship is dropped and counted, with no fuzzy match and no placeholder.
+    These endpoints are resolved only against the nodes of the original graph
+    (exact id, then normalized id/label), never against placeholders created
+    during repair.
     """
     report = RepairReport()
 
@@ -86,10 +98,35 @@ def repair_graph(graph: KnowledgeGraph) -> tuple[KnowledgeGraph, RepairReport]:
             report.remapped_endpoints[ref] = placeholder_id
         return placeholder_id
 
+    # Snapshot of the original graph: resolve() grows the live sets with placeholders,
+    # and a speaker link must never bind to one of those.
+    original_ids = frozenset(node_ids)
+    original_candidates = dict(candidates)
+
+    def resolve_strict(ref: str) -> str | None:
+        if ref in original_ids:
+            return ref
+        return original_candidates.get(_normalize_id(ref))
+
     repaired_rels: list[Relationship] = []
     for rel in graph.relationships:
-        source = resolve(rel.source_node_id)
-        target = resolve(rel.target_node_id)
+        endpoints: tuple[str, str]
+        if protect_speaker_links and rel.type.upper() in SPEAKER_LINK_TYPES:
+            strict_source = resolve_strict(rel.source_node_id)
+            strict_target = resolve_strict(rel.target_node_id)
+            if strict_source is None or strict_target is None:
+                report.dropped_speaker_links += 1
+                continue
+            for ref, resolved in (
+                (rel.source_node_id, strict_source),
+                (rel.target_node_id, strict_target),
+            ):
+                if ref != resolved:
+                    report.remapped_endpoints[ref] = resolved
+            endpoints = (strict_source, strict_target)
+        else:
+            endpoints = (resolve(rel.source_node_id), resolve(rel.target_node_id))
+        source, target = endpoints
         if source == target:
             report.dropped_self_loops += 1
             continue
@@ -106,10 +143,11 @@ def repair_graph(graph: KnowledgeGraph) -> tuple[KnowledgeGraph, RepairReport]:
     if report.has_repairs:
         logger.info(
             "Graph repair: %d endpoint(s) remapped, %d placeholder(s) created, "
-            "%d self-loop(s) dropped, %d isolated node(s)",
+            "%d self-loop(s) dropped, %d speaker link(s) dropped, %d isolated node(s)",
             len(report.remapped_endpoints),
             len(report.placeholder_nodes),
             report.dropped_self_loops,
+            report.dropped_speaker_links,
             len(report.isolated_nodes),
         )
     return repaired, report

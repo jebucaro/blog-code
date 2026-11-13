@@ -5,15 +5,32 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 logger = logging.getLogger(__name__)
 
-NODE_TYPES: list[str] = [
+# Phrase that introduces the allowed type list in the Node.type description;
+# extraction_json_schema rewrites the text after it, so both share this constant.
+NODE_TYPE_LIST_INTRO = "Must be one of:"
+
+DOCUMENT_NODE_TYPES: list[str] = [
     "person", "organization", "location", "event",
     "concept", "product", "technology", "date", "other",
 ]
+TRANSCRIPT_NODE_TYPES: list[str] = [
+    *DOCUMENT_NODE_TYPES, "topic", "statement", "decision", "action_item",
+]
+# Shared list used by the validator and the colour map.
+NODE_TYPES: list[str] = TRANSCRIPT_NODE_TYPES
 RELATIONSHIP_TYPE_EXAMPLES: list[str] = [
     "WORKS_AT", "WORKS_WITH", "OWNS", "LEADS", "CREATED", "DEPENDS_ON",
     "LOCATED_IN", "PART_OF", "AFFILIATED_WITH", "ACQUIRED", "INVESTED_IN",
     "REPORTED_TO", "COMPETED_WITH", "CAUSED", "PRECEDED", "FOLLOWED", "RELATED_TO",
 ]
+TRANSCRIPT_RELATIONSHIP_TYPE_EXAMPLES: list[str] = [
+    *RELATIONSHIP_TYPE_EXAMPLES,
+    "STATED", "PROPOSED", "RAISED", "ASKED", "DECIDED",
+    "AGREED_WITH", "DISAGREED_WITH", "COMMITTED_TO", "ASSIGNED_TO", "ABOUT",
+]
+SPEAKER_LINK_TYPES: frozenset[str] = frozenset(
+    TRANSCRIPT_RELATIONSHIP_TYPE_EXAMPLES[-10:]
+) - {"ABOUT"}
 
 CONTEXT_MAX_LENGTH = 200
 
@@ -53,12 +70,14 @@ class Node(BaseModel):
             "If not provided, it will be auto-generated from the id."
         )
     )
+    # The field's own schema lists only the nine document types so the Document
+    # schema stays stable; the validator below accepts the full shared NODE_TYPES.
     type: str = Field(
         description=(
             "The general category of the entity, always lowercase. "
-            "Must be one of: " + ", ".join(NODE_TYPES) + "."
+            + NODE_TYPE_LIST_INTRO + " " + ", ".join(DOCUMENT_NODE_TYPES) + "."
         ),
-        json_schema_extra={"enum": [*NODE_TYPES]},
+        json_schema_extra={"enum": [*DOCUMENT_NODE_TYPES]},
     )
     context: str | None = Field(
         default=None,
@@ -213,7 +232,7 @@ class KnowledgeGraph(BaseModel):
         return self
 
 
-def extraction_json_schema() -> dict[str, Any]:
+def extraction_json_schema(node_types: list[str] | None = None) -> dict[str, Any]:
     """KnowledgeGraph JSON schema for Gemini's structured output, with `context` required.
 
     The Python models keep `context` optional (repair placeholders and callers
@@ -221,8 +240,20 @@ def extraction_json_schema() -> dict[str, Any]:
     in structured output. The schema sent to Gemini therefore requires a plain
     string per node/relationship, forcing a decision each time; an empty
     string normalizes back to None on parsing.
+
+    `node_types` is the list of node types offered to the model; None means
+    the Document-mode list.
     """
+    allowed = list(DOCUMENT_NODE_TYPES if node_types is None else node_types)
+    if not allowed or any(name not in NODE_TYPES for name in allowed):
+        raise ValueError(f"node_types must be a non-empty subset of NODE_TYPES, got {allowed}")
     schema = KnowledgeGraph.model_json_schema()
+    type_property = schema["$defs"]["Node"]["properties"]["type"]
+    type_property["enum"] = [*allowed]
+    type_property["description"] = (
+        type_property["description"].split(NODE_TYPE_LIST_INTRO)[0]
+        + NODE_TYPE_LIST_INTRO + " " + ", ".join(allowed) + "."
+    )
     for name in ("Node", "Relationship"):
         definition = schema["$defs"][name]
         original = definition["properties"]["context"]

@@ -36,6 +36,11 @@ def _build_graph_html(
     )
 
 
+INPUT_TYPE_OPTIONS = {
+    "Document": "document",
+    "Transcript (meeting, video, podcast)": "transcript",
+}
+
 THINKING_LEVEL_OPTIONS = {
     "Model default": "default",
     "Low": "low",
@@ -109,19 +114,56 @@ class StreamlitApp:
                 help="Choose the Gemini model for knowledge graph extraction.",
             )
 
-            st.session_state['use_summary_for_kg'] = st.sidebar.checkbox(
-                "Use executive summary to build knowledge graph",
-                value=st.session_state['use_summary_for_kg'],
+            input_labels = list(INPUT_TYPE_OPTIONS)
+            current_input_type = st.session_state['settings'].input_type
+            input_index = next(
+                (i for i, label in enumerate(input_labels)
+                 if INPUT_TYPE_OPTIONS[label] == current_input_type),
+                0,
+            )
+            selected_input_label = st.sidebar.selectbox(
+                "Input type",
+                options=input_labels,
+                index=input_index,
+                key="input_type_select",
                 help=(
-                    "If enabled, the app first asks Gemini for an executive "
-                    "summary of your text and then builds the knowledge graph "
-                    "from that summary. This produces a higher-level, more "
-                    "focused graph, but the summary drops most fine detail "
-                    "(dates, numbers, reasons), so nodes and relationships get "
-                    "little supporting context. Off by default: the graph is "
-                    "built from your full text."
+                    "Transcript mode tracks who said what and captures decisions "
+                    "and action items from meetings, videos and podcasts. Use "
+                    "Document for articles and reports."
                 ),
             )
+            st.session_state['settings'].input_type = INPUT_TYPE_OPTIONS[selected_input_label]
+            is_transcript = st.session_state['settings'].input_type == "transcript"
+
+            summary_help = (
+                "If enabled, the app first asks Gemini for an executive "
+                "summary of your text and then builds the knowledge graph "
+                "from that summary. This produces a higher-level, more "
+                "focused graph, but the summary drops most fine detail "
+                "(dates, numbers, reasons), so nodes and relationships get "
+                "little supporting context. Off by default: the graph is "
+                "built from your full text."
+            )
+            if is_transcript:
+                # Own key: an unkeyed checkbox shares its id with the Document-mode
+                # one (same label/value/help), so a held tick would show through.
+                st.sidebar.checkbox(
+                    "Use executive summary to build knowledge graph",
+                    value=False,
+                    disabled=True,
+                    help=summary_help,
+                    key="use_summary_for_kg_transcript",
+                )
+                st.sidebar.caption(
+                    "Not available in Transcript mode: the summary drops who "
+                    "said what, so the graph is always built from the full text."
+                )
+            else:
+                st.session_state['use_summary_for_kg'] = st.sidebar.checkbox(
+                    "Use executive summary to build knowledge graph",
+                    value=st.session_state['use_summary_for_kg'],
+                    help=summary_help,
+                )
 
             thinking_labels = list(THINKING_LEVEL_OPTIONS)
             current_level = st.session_state['settings'].thinking_level
@@ -228,7 +270,8 @@ class StreamlitApp:
         if extractor is not None:
             s = st.session_state['settings']
             if (extractor.settings.gemini_model != s.gemini_model or
-                    extractor.settings.thinking_level != s.thinking_level):
+                    extractor.settings.thinking_level != s.thinking_level or
+                    extractor.settings.input_type != s.input_type):
                 extractor.close()
                 st.session_state['extractor'] = None
 
@@ -247,7 +290,11 @@ class StreamlitApp:
                     st.session_state['extractor'] = GeminiExtractor(
                         st.session_state['settings']
                     )
-                use_summary_for_kg = st.session_state.get('use_summary_for_kg', False)
+                is_transcript = st.session_state['settings'].input_type == "transcript"
+                use_summary_for_kg = (
+                    False if is_transcript
+                    else st.session_state.get('use_summary_for_kg', False)
+                )
 
                 result = st.session_state['extractor'].extract_with_summary(
                     sample_text,
@@ -271,7 +318,9 @@ class StreamlitApp:
                     logger.info("Extraction returned an empty knowledge graph.")
                     return
 
-                repaired_graph, repair_report = repair_graph(knowledge_graph)
+                repaired_graph, repair_report = repair_graph(
+                    knowledge_graph, protect_speaker_links=is_transcript
+                )
                 st.session_state['knowledge_graph'] = repaired_graph
                 st.session_state["graph_version"] = uuid.uuid4().hex
                 st.session_state['repair_report'] = repair_report
@@ -375,6 +424,10 @@ class StreamlitApp:
                 parts.append(f"added {len(report.placeholder_nodes)} placeholder node(s)")
             if report.dropped_self_loops:
                 parts.append(f"dropped {report.dropped_self_loops} self-loop(s)")
+            if report.dropped_speaker_links:
+                parts.append(
+                    f"dropped {report.dropped_speaker_links} unverifiable speaker link(s)"
+                )
             if report.isolated_nodes:
                 state = "shown" if show_isolated else "hidden"
                 parts.append(f"{len(report.isolated_nodes)} isolated node(s) {state}")

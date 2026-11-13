@@ -19,6 +19,10 @@ DEFAULT_MODEL = "gemini-4-hydrogen"
 # gemini-4-hydrogen accepts it.
 THINKING_LEVELS = ["default", "low", "medium", "high"]
 
+# Input types the app supports. "transcript" tracks who said what in
+# meetings, videos and podcasts.
+INPUT_TYPES = ["document", "transcript"]
+
 # Maximum input text length (characters) for extraction/summarization
 # Approximately 1 hour of transcription at typical speaking rate
 MAX_INPUT_LENGTH = 100000
@@ -30,6 +34,7 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     gemini_model: str = DEFAULT_MODEL
     thinking_level: str = "default"
+    input_type: str = "document"
 
     viz_theme: str = "dark"  # Options: 'dark', 'light'
 
@@ -47,5 +52,15 @@ class Settings(BaseSettings):
         if normalized not in THINKING_LEVELS:
             raise ValueError(
                 f"thinking_level must be one of {THINKING_LEVELS}, got '{v}'"
+            )
+        return normalized
+
+    @field_validator('input_type')
+    @classmethod
+    def validate_input_type(cls, v: str) -> str:
+        normalized = v.strip().lower()
+        if normalized not in INPUT_TYPES:
+            raise ValueError(
+                f"input_type must be one of {INPUT_TYPES}, got '{v}'"
             )
         return normalized

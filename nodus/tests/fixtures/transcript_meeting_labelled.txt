@@ -1,0 +1,33 @@
+Priya Raman: Morning everyone, thanks for joining. Let's get started. For anyone who hasn't met Tomas, he's the Head of Platform at Brightwell Logistics, our biggest customer.
+
+Tomas Weber: Thanks Priya. Good to be here. Yes, I run the platform team at Brightwell, so the API latency issue is mine to worry about.
+
+Priya Raman: Right. I'm the engineering director at Larkspur Systems, and I'd like to use this hour to settle how we handle the latency problem before the quarter ends.
+
+Dana Okafor: Can everyone hear me okay? Sorry, my mic was muted. I'm Dana, I lead site reliability here at Larkspur. The short version is that p95 latency on the routing API went from 180 milliseconds to 640 milliseconds since the March release.
+
+Tomas Weber: That's what we see too. Our dispatch screens time out about twice a day now.
+
+Priya Raman: I want to propose that we roll back the new query planner and re-release it after a fix. It would cost us about two weeks of feature work.
+
+Dana Okafor: I disagree. A rollback means a full regression cycle, and that's three weeks, not two. I'd rather add a cache in front of the planner and keep the release.
+
+Marcus Lindqvist: Can I raise a concern about the cache? Stale routes are a real risk. If a driver gets an outdated route, Brightwell loses money, and we are on the hook for the service credit.
+
+Tomas Weber: He's right, stale routes would be worse than slow ones for us.
+
+Priya Raman: Okay. Given that, let's decide: we roll back the query planner this Friday, and we keep the cache idea as a later experiment.
+
+Dana Okafor: Fine, I'll go along with it, even though I still think it's the slower path.
+
+Priya Raman: Thanks. Marcus, can you own the rollback plan? I'd like it written up by Wednesday.
+
+Marcus Lindqvist: Yes, I'll have the rollback plan done by Wednesday the 12th.
+
+Priya Raman: And Dana, please send Tomas the latency dashboards by end of day tomorrow.
+
+Dana Okafor: Will do, tomorrow by five.
+
+Tomas Weber: Great, that helps a lot. Okay, thanks all, talk soon.
+
+Priya Raman: Thanks everyone, have a good one.

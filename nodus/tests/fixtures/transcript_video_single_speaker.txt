@@ -1,0 +1,13 @@
+[00:00:05] Hi everyone, welcome back to the channel. My name is Elena Voss, I'm a battery systems engineer at Calder Energy, and today I want to walk you through what we learned from two years of running home battery packs in cold climates.
+
+[00:01:15] First, the headline number. Across our 1,200 test homes in northern Minnesota and Manitoba, the usable capacity of lithium iron phosphate packs dropped by 22 percent when outdoor temperatures stayed below minus 15 degrees Celsius for a week or more.
+
+[00:03:40] The second thing we found surprised us. Packs installed in an insulated garage lost only 6 percent. So the location matters far more than the chemistry. A garage costs about 400 dollars to insulate properly, which is cheap compared with the 3,000 dollars you lose in capacity over the pack's life.
+
+[00:06:10] Now, a lot of you asked in the comments about heaters. Yes, built-in heaters work, but they use energy. In our data, a heater consumed roughly 9 percent of the pack's daily output in January, so you are trading one loss for another.
+
+[00:09:25] Third, charging speed. If you charge below zero degrees without warming the cells first, you permanently damage them. We saw capacity fade of 3 percent per year in homes that did this, against 1 percent in homes that preheated the pack.
+
+[00:12:50] So what do I recommend? Install the pack in a conditioned or insulated space, preheat before charging when the temperature is below zero, and size your system with an extra 25 percent of capacity for the coldest months.
+
+[00:15:30] Next year at Calder we plan to publish the full dataset and test a new electrolyte that the lab believes could cut winter losses in half. I'll make a follow-up video when we have results. If you found this useful, please like and subscribe, and I'll see you in the next one.

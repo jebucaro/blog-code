@@ -6,7 +6,7 @@ A knowledge graph extraction and visualization system powered by Google Gemini A
 
 - **AI-Powered Extraction**: Uses Google Gemini API to intelligently extract nodes (entities) and relationships from text
 - **Interactive Visualizations**: Creates dynamic, explorable graph visualizations using PyVis
-- **Multiple Model Support**: Choose from curated Gemini models (Flash Lite, Flash, Pro) based on your needs
+- **Multiple Model Support**: Choose from curated Gemini models (Flash-Lite, Hydrogen, Carbon) based on your needs
 - **File Upload**: Load text files directly or paste text manually
 - **Export Capabilities**: Download visualizations as HTML or raw data as JSON
 - **Real-time Statistics**: View node/relationship counts and type distributions
@@ -44,7 +44,7 @@ Create a `.env` file in the project root:
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # Optional (defaults shown)
-GEMINI_MODEL=gemini-3.8-flash
+GEMINI_MODEL=gemini-4-hydrogen
 THINKING_LEVEL=default
 VIZ_THEME=dark
 ```
@@ -71,10 +71,14 @@ This will:
 1. **Enter API Key**: Paste your Gemini API key in the sidebar (if not in `.env`)
 2. **Select Model**: Choose from:
    - `gemini-3.5-flash-lite` - Fastest, most cost-effective
-   - `gemini-3.8-flash` - Balanced performance (default)
-   - `gemini-4-argon` - Most capable, deepest reasoning (paid tier only)
+   - `gemini-4-hydrogen` - Balanced performance (default)
+   - `gemini-4-carbon` - Most capable, deepest reasoning (paid tier only)
 3. **Pick a Thinking Level** (optional): "Model default" uses each model's built-in
-   thinking level; Low/Medium/High trade speed for extraction quality.
+   thinking level; Low/Medium/High trade speed for extraction quality. The built-in
+   level is High on `gemini-4-hydrogen`, Medium on `gemini-4-carbon` and Minimal on
+   `gemini-3.5-flash-lite`. The setting applies to knowledge graph extraction only:
+   the executive summary and chat always use the model's built-in level. Picking
+   Low or Medium on the default model makes the graph extraction call cheaper.
    The sidebar's "Use executive summary to build knowledge graph" checkbox is **off**
    by default: the graph is built from your full text, which keeps the dates, numbers,
    and reasons that fill each node's and relationship's `context`. Turn it on for a
@@ -172,8 +176,8 @@ The application supports three curated Gemini models:
 | Model | Best For | Speed | Cost |
 |-------|----------|-------|------|
 | `gemini-3.5-flash-lite` | Quick extractions, small texts | Fastest | Lowest |
-| `gemini-3.8-flash` | Balanced performance (default) | Fast | Medium |
-| `gemini-4-argon` | Complex texts, high accuracy (paid tier only) | Slower | Higher |
+| `gemini-4-hydrogen` | Balanced performance (default) | Fast | Medium |
+| `gemini-4-carbon` | Complex texts, high accuracy (paid tier only) | Slower | Highest |
 
 ### Visualization Themes
 
@@ -208,6 +212,10 @@ sent only the structured graph. Extraction and chat are otherwise
 independent - the retention tradeoff only applies while you're actively
 using Chat, and starts fresh (a new server-side thread) every time
 you re-extract or click Clear.
+
+With the current `google-genai` SDK, a response that reaches the per-request output
+limit is continued automatically with follow-up requests. This is rare for typical
+documents, but each follow-up request is billed for its input again.
 
 ## Development
 

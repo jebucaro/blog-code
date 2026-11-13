@@ -136,8 +136,11 @@ class StreamlitApp:
                 index=current_index,
                 help=(
                     "Controls how much reasoning Gemini uses during knowledge graph "
-                    "extraction. Higher levels are more accurate but slower. "
-                    "'Model default' uses each model's built-in level."
+                    "extraction. Higher levels are more accurate but slower and cost more. "
+                    "'Model default' uses each model's built-in level: High on "
+                    "gemini-4-hydrogen, Medium on gemini-4-carbon, Minimal on "
+                    "gemini-3.5-flash-lite. The executive summary and chat always use "
+                    "the built-in level."
                 ),
             )
             st.session_state['settings'].thinking_level = THINKING_LEVEL_OPTIONS[selected_label]

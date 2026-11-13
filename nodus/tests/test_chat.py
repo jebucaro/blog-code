@@ -72,14 +72,14 @@ class TestFirstQuestion:
     def test_sends_wrapped_source_and_relationships_with_no_previous_interaction_id(self):
         client = MagicMock()
         client.interactions.create.return_value = make_response()
-        session = DocumentChatSession(client, model="gemini-3.8-flash")
+        session = DocumentChatSession(client, model="gemini-4-hydrogen")
 
         session.ask("Who works at Acme?", graph=make_graph(), source_text=make_source_text())
 
         _, kwargs = client.interactions.create.call_args
         assert "previous_interaction_id" not in kwargs
         assert kwargs["store"] is True
-        assert kwargs["model"] == "gemini-3.8-flash"
+        assert kwargs["model"] == "gemini-4-hydrogen"
         assert kwargs["system_instruction"] == CHAT_SYSTEM_PROMPT
         assert "BEGIN SOURCE DOCUMENT" in kwargs["input"]
         assert make_source_text() in kwargs["input"]
@@ -94,24 +94,24 @@ class TestFirstQuestion:
         )
 
     def test_missing_graph_on_first_question_raises_value_error(self):
-        session = DocumentChatSession(MagicMock(), model="gemini-3.8-flash")
+        session = DocumentChatSession(MagicMock(), model="gemini-4-hydrogen")
         with pytest.raises(ValueError):
             session.ask("Who works at Acme?", source_text=make_source_text())
 
     def test_missing_source_text_on_first_question_raises_value_error(self):
-        session = DocumentChatSession(MagicMock(), model="gemini-3.8-flash")
+        session = DocumentChatSession(MagicMock(), model="gemini-4-hydrogen")
         with pytest.raises(ValueError):
             session.ask("Who works at Acme?", graph=make_graph())
 
     def test_empty_source_text_on_first_question_raises_value_error(self):
-        session = DocumentChatSession(MagicMock(), model="gemini-3.8-flash")
+        session = DocumentChatSession(MagicMock(), model="gemini-4-hydrogen")
         with pytest.raises(ValueError):
             session.ask("Who works at Acme?", graph=make_graph(), source_text="   ")
 
     def test_node_and_relationship_context_is_not_sent(self):
         client = MagicMock()
         client.interactions.create.return_value = make_response()
-        session = DocumentChatSession(client, model="gemini-3.8-flash")
+        session = DocumentChatSession(client, model="gemini-4-hydrogen")
         graph = KnowledgeGraph(
             nodes=[
                 Node(id="alice", type="person", label="Alice"),
@@ -134,7 +134,7 @@ class TestFirstQuestion:
     def test_returns_output_text(self):
         client = MagicMock()
         client.interactions.create.return_value = make_response(output_text="Alice works at Acme.")
-        session = DocumentChatSession(client, model="gemini-3.8-flash")
+        session = DocumentChatSession(client, model="gemini-4-hydrogen")
 
         answer = session.ask("Who works at Acme?", graph=make_graph(), source_text=make_source_text())
 
@@ -148,7 +148,7 @@ class TestFollowUpQuestion:
             make_response(interaction_id="int-1"),
             make_response(interaction_id="int-2"),
         ]
-        session = DocumentChatSession(client, model="gemini-3.8-flash")
+        session = DocumentChatSession(client, model="gemini-4-hydrogen")
         session.ask("Who works at Acme?", graph=make_graph(), source_text=make_source_text())
 
         session.ask("What is their role?")
@@ -165,7 +165,7 @@ class TestFollowUpQuestion:
             make_response(interaction_id="int-2"),
             make_response(interaction_id="int-3"),
         ]
-        session = DocumentChatSession(client, model="gemini-3.8-flash")
+        session = DocumentChatSession(client, model="gemini-4-hydrogen")
         session.ask("Q1", graph=make_graph(), source_text=make_source_text())
         session.ask("Q2")
         session.ask("Q3")
@@ -176,7 +176,7 @@ class TestFollowUpQuestion:
     def test_reset_requires_graph_and_source_text_again(self):
         client = MagicMock()
         client.interactions.create.return_value = make_response(interaction_id="int-1")
-        session = DocumentChatSession(client, model="gemini-3.8-flash")
+        session = DocumentChatSession(client, model="gemini-4-hydrogen")
         session.ask("Who works at Acme?", graph=make_graph(), source_text=make_source_text())
 
         session.reset()
@@ -191,7 +191,7 @@ class TestFollowUpQuestion:
             make_response(interaction_id="int-2"),
             make_response(interaction_id="int-3"),
         ]
-        session = DocumentChatSession(client, model="gemini-3.8-flash")
+        session = DocumentChatSession(client, model="gemini-4-hydrogen")
         session.ask("Who works at Acme?", graph=make_graph(), source_text=make_source_text())
         session.ask("What is their role?")
 
@@ -206,7 +206,7 @@ class TestErrorHandling:
     def test_incomplete_status_raises_token_limit_error(self):
         client = MagicMock()
         client.interactions.create.return_value = make_response(status="incomplete")
-        session = DocumentChatSession(client, model="gemini-3.8-flash")
+        session = DocumentChatSession(client, model="gemini-4-hydrogen")
 
         with pytest.raises(TokenLimitError):
             session.ask("Who works at Acme?", graph=make_graph(), source_text=make_source_text())
@@ -214,7 +214,7 @@ class TestErrorHandling:
     def test_empty_output_text_raises_token_limit_error(self):
         client = MagicMock()
         client.interactions.create.return_value = make_response(output_text="")
-        session = DocumentChatSession(client, model="gemini-3.8-flash")
+        session = DocumentChatSession(client, model="gemini-4-hydrogen")
 
         with pytest.raises(TokenLimitError):
             session.ask("Who works at Acme?", graph=make_graph(), source_text=make_source_text())
@@ -222,13 +222,13 @@ class TestErrorHandling:
     def test_sdk_exception_is_mapped_through_shared_error_mapping(self):
         client = MagicMock()
         client.interactions.create.side_effect = RuntimeError("429 quota exceeded")
-        session = DocumentChatSession(client, model="gemini-3.8-flash")
+        session = DocumentChatSession(client, model="gemini-4-hydrogen")
 
         with pytest.raises(RateLimitError):
             session.ask("Who works at Acme?", graph=make_graph(), source_text=make_source_text())
 
     def test_empty_question_raises_value_error(self):
-        session = DocumentChatSession(MagicMock(), model="gemini-3.8-flash")
+        session = DocumentChatSession(MagicMock(), model="gemini-4-hydrogen")
 
         with pytest.raises(ValueError):
             session.ask("   ", graph=make_graph(), source_text=make_source_text())

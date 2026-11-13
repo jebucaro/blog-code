@@ -7,13 +7,23 @@ class TestModelLineup:
     def test_available_models(self):
         assert AVAILABLE_MODELS == [
             "gemini-3.5-flash-lite",
-            "gemini-3.8-flash",
-            "gemini-4-argon",
+            "gemini-4-hydrogen",
+            "gemini-4-carbon",
         ]
 
     def test_default_model_is_available(self):
-        assert DEFAULT_MODEL == "gemini-3.8-flash"
+        assert DEFAULT_MODEL == "gemini-4-hydrogen"
         assert DEFAULT_MODEL in AVAILABLE_MODELS
+
+    @pytest.mark.parametrize("removed", ["gemini-3.8-flash", "gemini-4-argon"])
+    def test_removed_models_not_offered(self, removed):
+        # Removed IDs must stay out of the picker; app.py falls back to DEFAULT_MODEL for them.
+        assert removed not in AVAILABLE_MODELS
+
+    def test_thinking_levels_valid_on_every_model(self):
+        # "minimal" is rejected by Gemini 4 models; "xhigh" only exists on Hydrogen.
+        assert "minimal" not in THINKING_LEVELS
+        assert "xhigh" not in THINKING_LEVELS
 
 
 class TestSettings:
